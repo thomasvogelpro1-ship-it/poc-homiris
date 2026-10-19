@@ -196,6 +196,8 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
 .login-box{width:min(100%,520px);display:grid;gap:14px}
 .login-box .brand b{font-family:var(--f-display);font-size:20px;font-weight:800}
 .login-box .brand small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.recap{display:grid;gap:12px}
+.recap textarea{width:100%;min-height:360px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);padding:12px 14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}
 .priv-note{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .chip.ghost{background:none;color:var(--muted)}
 .resetbtn{border:2px solid var(--bad);background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:8px 14px;font-weight:700}
@@ -461,7 +463,19 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
   <section class="view" id="v-bilan" hidden>
     <div class="rowhead">
       <div><div class="eyebrow">Préparation du retour d'expérience</div><h2 style="font-size:24px">Résultats mois par mois</h2></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" id="copyBilan">Copier le tableau (Excel)</button><button class="chip" id="exportBtn" hidden>Exporter toutes les saisies (CSV)</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" id="copyBilan">Copier le tableau (Excel)</button><button class="chip" id="exportBtn" hidden>Exporter toutes les saisies (CSV)</button><button class="chip" id="recapBtn" hidden>Récap de la semaine</button></div>
+    </div>
+    <div class="card recap" id="recapCard" hidden>
+      <div class="rowhead">
+        <div><div class="eyebrow">Récap de la semaine · prêt à coller dans un e-mail</div><h2 style="font-size:20px" id="recapTitle"></h2></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="seg" id="recapSeg"><button data-rw="-1" aria-pressed="true">Semaine dernière</button><button data-rw="0" aria-pressed="false">Semaine en cours</button></div>
+          <button class="unlockbtn" id="recapCopy" type="button">Copier le texte</button>
+          <button class="chip" id="recapClose" type="button">Fermer</button>
+        </div>
+      </div>
+      <label for="recapText" class="sr">Texte du récapitulatif</label>
+      <textarea id="recapText" readonly rows="22"></textarea>
     </div>
     <p class="muted" style="margin:0">Les objectifs de chaque mois sont proratisés selon les jours du POC qu'il contient : un mois partiel (comme février) a un objectif réduit d'autant. Une installation compte dans le mois où elle est déclarée vendue. « Appels » = total saisi en fin de journée par chaque CC ; « Abordés » = appels où la télésurveillance a été évoquée.</p>
     <div class="card">
@@ -675,7 +689,7 @@ function stats(evs){ const z=()=>({calls:0,props:0,rdv:0,ventes:0,annules:0});
 function perFilter(p){ const t=today(), m=mkey(t); return p==="jour" ? e=>e.date===t : p==="mois" ? e=>mkey(e.date)===m : ()=>true; }
 function monthFrac(){ const n=new Date(); const dim=new Date(n.getFullYear(), n.getMonth()+1, 0).getDate(); return n.getDate()/dim; }
 function paceTag(actual, expected, lab){ lab=lab?lab+" · ":""; if(expected<0.5) return '<span class="pill neutral">'+lab+'Démarrage</span>'; const r=actual/expected; return r>=1 ? '<span class="pill good">● '+lab+'En avance</span>' : r>=0.8 ? '<span class="pill warn">● '+lab+'Léger retard</span>' : '<span class="pill bad">● '+lab+'En retard</span>'; }
-const fmtObj = v => fmt(v, Number.isInteger(Math.round(v*100)/100) ? 0 : 2);
+const fmtObj = v => v.toLocaleString("fr-FR",{maximumFractionDigits:2});
 
 /* ---------- verrous ---------- */
 function renderLocks(){
@@ -863,7 +877,7 @@ function renderAnalyse(){
 
 function renderBilan(){
   const all=allEvents(), tg=monthTargets(), tgV=monthTargets(OV()), months=monthList(), cur=mkey(today());
-  $("exportBtn").hidden=!isAdmin();
+  $("exportBtn").hidden=!isAdmin(); $("recapBtn").hidden=!isAdmin(); if(!isAdmin()) $("recapCard").hidden=true;
   const line=(lab,s,o,oV,mf,bold)=>'<tr'+(bold?' style="font-weight:700"':'')+'><td class="who">'+lab+'</td><td class="num">'+fmt(s.calls)+'</td><td class="num">'+fmt(s.abordes)+'</td><td class="num">'+fmt(s.props)+'</td><td class="num">'+fmt(s.mes.rdv)+'</td><td class="num">'+fmt(s.gc.rdv)+'</td><td class="num"><b>'+fmt(s.rdv)+'</b></td><td class="num">'+(o?fmtObj(Math.round(o*10)/10):'–')+'</td><td class="barcell">'+atteinte(s.rdv,o,mf)+'</td><td class="num">'+fmt(s.annules)+'</td><td class="num"><b>'+fmt(s.ventes)+'</b></td><td class="num">'+(oV?fmtObj(Math.round(oV*10)/10):'–')+'</td><td class="barcell">'+atteinte(s.ventes,oV,mf,'var(--sale)')+'</td><td class="num">'+pct(s.rdv,s.calls)+'</td><td class="num">'+pct(s.ventes,s.rdv)+'</td></tr>';
   let rows=months.map(m=>line(mlabel(m)+(m===cur?' <span class="pill neutral" style="font-size:11px;padding:1px 7px">en cours</span>':''), stats(all.filter(e=>mkey(e.date)===m)), tg[m]||0, tgV[m]||0, m===cur?monthFrac():null)).join("");
   rows+=line("Total POC", stats(all), S.cfg.objectif, OV(), null, true);
@@ -895,6 +909,76 @@ function bilanTSV(){
 $("copyBilan").addEventListener("click", async e=>{ e.stopPropagation(); const txt=bilanTSV();
   try{ await navigator.clipboard.writeText(txt); toast("Tableau copié : collez-le dans Excel ou PowerPoint.", null); }
   catch(err){ toast("Copie bloquée par le navigateur. Sélectionnez le tableau à la main.", null); } });
+
+/* ---------- récap hebdomadaire (responsable) ---------- */
+S.recapW=-1;
+function mondayOf(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return dstr(x); }
+function buildRecap(offset){
+  const ws=addDays(mondayOf(new Date()), 7*offset), we=addDays(ws,6), pws=addDays(ws,-7), pwe=addDays(ws,-1);
+  const all=allEvents(), inR=(a,b)=>e=>e.date>=a&&e.date<=b, W=all.filter(inR(ws,we)), P=all.filter(inR(pws,pwe));
+  const sw=stats(W), sp=stats(P), d=(a,b)=>{ const x=a-b; return x>0?" (+"+x+")":x<0?" ("+x+")":" (=)"; };
+  const L=[], h=t=>{ L.push(""); L.push("■ "+t); };
+  L.push("POC Homiris · semaine du "+dShort(ws)+" au "+dShort(we)+" "+parseD(we).getFullYear());
+  if(we<S.cfg.start){ L.push(""); L.push("Le POC démarre le "+nice(S.cfg.start)+" : pas encore de chiffres."); return L.join("\n"); }
+  h("Équipe sur la semaine (écart avec la semaine précédente)");
+  L.push("Appels passés : "+sw.calls+d(sw.calls,sp.calls));
+  L.push("Appels où la télésurveillance a été abordée : "+sw.abordes+d(sw.abordes,sp.abordes)+" · "+pct(sw.abordes,sw.calls)+" des appels");
+  L.push("Propositions de RDV : "+sw.props+d(sw.props,sp.props));
+  L.push("RDV pris : "+sw.rdv+d(sw.rdv,sp.rdv)+" · dont Mise en service "+sw.mes.rdv+", Gestion courante "+sw.gc.rdv);
+  L.push("RDV annulés : "+sw.annules);
+  L.push("Installations vendues : "+sw.ventes+d(sw.ventes,sp.ventes));
+  L.push("RDV / appels : "+pct(sw.rdv,sw.calls)+" · Ventes / RDV : "+pct(sw.ventes,sw.rdv));
+  // avancement
+  const m=mkey(we), tg=monthTargets(), tgV=monthTargets(OV()), ms=stats(all.filter(e=>mkey(e.date)===m && e.date<=we));
+  const cum=stats(all.filter(e=>e.date<=we)), start=parseD(S.cfg.start), end=endDate(), frac=Math.min(1,Math.max(0,(parseD(we).getTime()+864e5-start)/(end-start)));
+  h("Avancement");
+  if(tg[m]) L.push(mlabel(m)+" : "+ms.rdv+" RDV sur "+fmt(tg[m],1)+" ("+pct(ms.rdv,tg[m])+") · "+ms.ventes+" installations sur "+fmt(tgV[m],1)+" ("+pct(ms.ventes,tgV[m])+")");
+  const expR=S.cfg.objectif*frac, expV=OV()*frac;
+  L.push("Cumul POC : "+cum.rdv+" RDV sur "+fmtObj(S.cfg.objectif)+" ("+pct(cum.rdv,S.cfg.objectif)+"), rythme attendu à date "+fmt(expR,0)+" → écart "+(cum.rdv-Math.round(expR)>=0?"+":"")+(cum.rdv-Math.round(expR)));
+  L.push("Cumul POC : "+cum.ventes+" installations sur "+fmtObj(OV())+" ("+pct(cum.ventes,OV())+"), rythme attendu à date "+fmt(expV,0)+" → écart "+(cum.ventes-Math.round(expV)>=0?"+":"")+(cum.ventes-Math.round(expV)));
+  // par conseiller
+  h("Par conseiller sur la semaine");
+  const io=(tg[m]||0)/CCS.length, iv=(tgV[m]||0)/CCS.length; let best=null;
+  CCS.forEach(cc=>{ const a=stats(W.filter(e=>e.cc===cc)), b=stats(P.filter(e=>e.cc===cc)), mm=stats(all.filter(e=>e.cc===cc&&mkey(e.date)===m&&e.date<=we));
+    L.push("- "+name(cc)+" : "+a.rdv+" RDV, "+a.ventes+" installation"+(a.ventes>1?"s":"")+", RDV/appels "+pct(a.rdv,a.calls)+" · mois : "+mm.rdv+"/"+fmt(io,2)+" RDV, "+mm.ventes+"/"+fmt(iv,2)+" inst.");
+    const g=a.rdv-b.rdv; if(g>0 && (!best||g>best.g)) best={cc,g}; });
+  if(best) L.push("Meilleure progression : "+name(best.cc)+" (+"+best.g+" RDV par rapport à la semaine précédente).");
+  // enseignements
+  h("Enseignements");
+  const ap=W.filter(e=>e.kind==="appel");
+  if(!ap.length) L.push("Aucun appel abordé saisi cette semaine.");
+  else {
+    const mt=sw.mes, gt=sw.gc, rm=mt.calls?mt.rdv/mt.calls:0, rg=gt.calls?gt.rdv/gt.calls:0;
+    L.push("Type d'appel le plus porteur : "+(mt.rdv===gt.rdv?"égalité ("+mt.rdv+" RDV chacun)":(mt.rdv>gt.rdv?"Mise en service":"Gestion courante")+" ("+Math.max(mt.rdv,gt.rdv)+" RDV)")+" · taux RDV/abordés : MES "+fmt(100*rm,0)+" %, GC "+fmt(100*rg,0)+" %");
+    const mo=Object.keys(MOTIFS).map(k=>[MOTIFS[k],sw.motifs[k]||0]).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    L.push("Principaux motifs de refus : "+(mo.length?mo.map(x=>x[0]+" ("+x[1]+")").join(", "):"aucun motif renseigné"));
+    const JOURS=["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"], byD={}, byH={};
+    ap.forEach(e=>{ const t=new Date(e.t), wd=parseD(e.date).getDay(), a=byD[wd]||(byD[wd]={n:0,r:0}), b=byH[t.getHours()]||(byH[t.getHours()]={n:0,r:0}); a.n++; b.n++; if(e.issue==="rdv"){a.r++; b.r++;} });
+    const top=o=>Object.entries(o).filter(([k,v])=>v.r).sort((a,b)=>b[1].r-a[1].r || b[1].r/b[1].n-a[1].r/a[1].n)[0];
+    const bd=top(byD), bh=top(byH);
+    if(bd) L.push("Meilleur jour : "+JOURS[bd[0]]+" ("+bd[1].r+" RDV sur "+bd[1].n+" abordés) · meilleur créneau : "+bh[0]+"h–"+(+bh[0]+1)+"h ("+bh[1].r+" RDV sur "+bh[1].n+")");
+  }
+  const lim=addDays(we,-14), old=all.filter(e=>e.kind==="appel"&&e.issue==="rdv"&&!e.vente&&!e.annule&&e.date<=lim);
+  L.push("RDV en attente depuis plus de 14 jours (ni vente ni annulation) : "+(old.length?old.length+" — "+CCS.map(cc=>[name(cc),old.filter(e=>e.cc===cc).length]).filter(x=>x[1]).map(x=>x[0]+" "+x[1]).join(", "):"aucun"));
+  // qualité
+  h("Qualité des données");
+  const miss=W.filter(e=>e.kind==="jour"&&e.total==null&&e.logged>0);
+  L.push("Total d'appels non renseigné : "+(miss.length?miss.map(e=>name(e.cc)+" le "+dShort(e.date)).join(", "):"aucun oubli"));
+  const wd=[0,1,2,3,4].map(i=>addDays(ws,i)).filter(x=>x<=today()&&x>=S.cfg.start);
+  const none=[]; CCS.forEach(cc=>{ const days=wd.filter(x=>!all.some(e=>e.cc===cc&&e.date===x&&(e.kind==="appel"||(e.kind==="jour"&&e.total!=null)))); if(days.length) none.push(name(cc)+" ("+days.map(dShort).join(", ")+")"); });
+  L.push("Jours ouvrés sans aucune saisie : "+(none.length?none.join(" ; "):"aucun")+" (absences possibles)");
+  L.push(""); L.push("Site : "+String(location.href||"").split("#")[0]);
+  return L.join("\n");
+}
+function renderRecap(){ if($("recapCard").hidden) return; const ws=addDays(mondayOf(new Date()),7*S.recapW);
+  $("recapTitle").textContent="Semaine du "+dShort(ws)+" au "+dShort(addDays(ws,6));
+  document.querySelectorAll("#recapSeg button").forEach(b=>b.setAttribute("aria-pressed", +b.dataset.rw===S.recapW));
+  $("recapText").value=buildRecap(S.recapW); }
+$("recapBtn").addEventListener("click", e=>{ e.stopPropagation(); if(!isAdmin()) return; $("recapCard").hidden=false; renderRecap(); });
+$("recapClose").addEventListener("click", e=>{ e.stopPropagation(); $("recapCard").hidden=true; });
+$("recapCopy").addEventListener("click", async e=>{ e.stopPropagation(); const t=$("recapText");
+  try{ await navigator.clipboard.writeText(t.value); toast("Récap copié : collez-le dans votre e-mail.", null); }
+  catch(x){ t.focus(); t.select(); toast("Texte sélectionné : faites Ctrl+C pour le copier.", null); } });
 
 function exportCSV(){
   const q=v=>{ v=v==null?"":String(v); return /[";\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
@@ -1110,6 +1194,7 @@ document.addEventListener("click", e=>{
   if(t.dataset.untrash){ if(isAdmin()){ const rr=S.appels.get(t.dataset.untrash); if(rr) enqueue({col:"appels", id:rr.id, mode:"merge", data:{supprime:false, supprimeT:null}}); toast("Saisie restaurée", null); } return; }
   if(t.classList.contains("outbtn")){ if(Date.now()<S.busyUntil) return; S.busyUntil=Date.now()+1200; if(S.type){ addEvent(S.type, t.dataset.o); S.type=null; render(); } return; }
   if(t.closest("#perSeg")){ S.per=t.dataset.p; render(); return; }
+  if(t.dataset.rw!==undefined){ S.recapW=+t.dataset.rw; renderRecap(); return; }
   if(t.dataset.bm){ S.bilanM=t.dataset.bm; render(); return; }
   if(t.closest("#anaSeg")){ S.anaPer=t.dataset.p; render(); return; }
   if(t.dataset.sale){ setVente(S.cc, t.dataset.date, +t.dataset.sale, true); return; }
