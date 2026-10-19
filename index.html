@@ -1,0 +1,1162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23D9822B'/%3E%3Cpath d='M5 12l7-6 7 6M7 11v8h10v-8' fill='none' stroke='%231B1206' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>POC Homiris</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box} html{color-scheme:light} body{margin:0;font-size:14px} img{max-width:100%} [hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout : barre fixe en haut (marque + onglets + lien Homiris), une colonne de contenu de 1080px, cartes réservées aux blocs actionnables. */
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --sunk:#E4E9F1; --ink:#13203A; --muted:#58627A; --line:#D6DCE6;
+  --accent:#D9822B; --accent-ink:#9A5512; --accent-soft:#FBEBD8;
+  --mes:#2E62C9; --mes-soft:#DCE6FA; --gc:#14907C; --gc-soft:#D4F0EA; --sale:#7048C8; --sale-soft:#ECE4FB;
+  --good:#1E8A4C; --good-soft:#DDF3E5; --warn:#B7791F; --warn-soft:#FBEFD5; --bad:#C0392B; --bad-soft:#F8DEDA;
+  --f-display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --f-body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1524; --surface:#162036; --sunk:#1D2942; --ink:#E8EDF7; --muted:#9AA6BF; --line:#2A3755;
+  --accent:#F0A04B; --accent-ink:#F6BC7C; --accent-soft:#3A2A17;
+  --mes:#6F9BF2; --mes-soft:#1E2E52; --gc:#3CC2AB; --gc-soft:#143A36; --sale:#A98AF2; --sale-soft:#2A2148;
+  --good:#4CC27E; --good-soft:#143524; --warn:#E3AE52; --warn-soft:#3A2E14; --bad:#EE7A6B; --bad-soft:#3E1D1A;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1524; --surface:#162036; --sunk:#1D2942; --ink:#E8EDF7; --muted:#9AA6BF; --line:#2A3755;
+  --accent:#F0A04B; --accent-ink:#F6BC7C; --accent-soft:#3A2A17;
+  --mes:#6F9BF2; --mes-soft:#1E2E52; --gc:#3CC2AB; --gc-soft:#143A36; --sale:#A98AF2; --sale-soft:#2A2148;
+  --good:#4CC27E; --good-soft:#143524; --warn:#E3AE52; --warn-soft:#3A2E14; --bad:#EE7A6B; --bad-soft:#3E1D1A;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:inherit}
+
+/* Barre */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--ink);color:var(--bg)}
+:root .top{--tb:var(--surface)}
+.top-in{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-dot{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
+.brand-dot svg{width:18px;height:18px}
+.brand b{font-family:var(--f-display);font-size:18px;font-weight:800;letter-spacing:-.01em}
+.brand small{display:block;font-size:11px;opacity:.7;letter-spacing:.06em;text-transform:uppercase;line-height:1.1}
+.homiris{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#1B1206;text-decoration:none;font-weight:700;padding:8px 14px;border-radius:999px;font-size:14px;white-space:nowrap}
+.homiris:hover{filter:brightness(1.07)}
+.tabs{max-width:1080px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto}
+.tab{background:none;border:0;color:var(--bg);opacity:.65;padding:10px 12px 12px;font-weight:600;border-bottom:3px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{opacity:1;border-bottom-color:var(--accent)}
+.tab:hover{opacity:1}
+
+main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;display:grid;gap:28px}
+.view{display:grid;gap:24px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.notice{padding:12px 16px;border-radius:10px;background:var(--warn-soft);color:var(--ink);border:1px solid var(--line);font-size:14px}
+
+/* Accueil */
+.hero{display:grid;grid-template-columns:auto minmax(0,1fr);gap:28px;align-items:center}
+@media (max-width:820px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}}
+.ring{position:relative;width:220px;height:220px}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring-c b{font-family:var(--f-display);font-size:52px;line-height:1;font-weight:800}
+.ring-c span{color:var(--muted);font-size:13px}
+.hero h1{font-size:clamp(26px,4vw,36px);font-weight:800;line-height:1.1}
+.hero-facts{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:14px}
+.fact b{display:block;font-family:var(--f-display);font-size:22px;font-weight:600}
+.fact span{font-size:13px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:700}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.neutral{background:var(--sunk);color:var(--muted)}
+.bar{height:10px;background:var(--sunk);border-radius:99px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--accent)}
+.bar .tick{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
+.month-row{display:grid;gap:8px}
+.month-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.big{font-family:var(--f-display);font-size:30px;font-weight:800;line-height:1}
+
+.rank{width:100%;border-collapse:collapse}
+.rank th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;font-weight:700;padding:0 8px 8px}
+.rank td{padding:10px 8px;border-top:1px solid var(--line);vertical-align:middle}
+.rank td.num,.rank th.num{text-align:right}
+.rank .who{font-weight:600;white-space:nowrap}
+.rank .pos{color:var(--muted);width:24px}
+.rank .barcell{min-width:120px;width:40%}
+.tblwrap{overflow-x:auto}
+.split{display:flex;height:16px;border-radius:99px;overflow:hidden;background:var(--sunk)}
+.split .m{background:var(--mes)} .split .g{background:var(--gc)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* Espace conseiller */
+.who-pick{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;font-weight:600}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.entry h2{font-size:20px}
+.step{display:grid;gap:10px;margin-top:16px}
+.step-lab{font-size:13px;font-weight:700;color:var(--muted)}
+.types{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.typebtn{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:14px;text-align:left;display:grid;gap:2px}
+.typebtn b{font-size:16px}
+.typebtn span{font-size:13px;color:var(--muted)}
+.typebtn[data-t="mes"][aria-pressed="true"]{border-color:var(--mes);background:var(--mes-soft)}
+.typebtn[data-t="gc"][aria-pressed="true"]{border-color:var(--gc);background:var(--gc-soft)}
+.outs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:560px){.outs{grid-template-columns:1fr}}
+.outbtn{border:0;border-radius:10px;padding:16px 12px;font-weight:700;font-size:15px;display:grid;gap:2px;text-align:center}
+.outbtn small{font-weight:500;font-size:12px;opacity:.8}
+.outbtn.sans{background:var(--sunk)}
+.outbtn.refus{background:var(--warn-soft);color:var(--ink)}
+.outbtn.rdv{background:var(--good);color:#fff}
+.outbtn:disabled{opacity:.4;cursor:not-allowed}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi b{display:block;font-family:var(--f-display);font-size:32px;font-weight:800;line-height:1.1}
+.kpi span{font-size:13px;color:var(--muted)}
+.kpi.hl{border-color:var(--accent);background:var(--accent-soft)}
+.kpi.hlv{border-color:var(--sale);background:var(--sale-soft)}
+.rings{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.ringbox{display:grid;justify-items:center;gap:6px}
+.ringbox .ring{width:170px;height:170px}
+.ringbox .ring-c b{font-size:38px}
+.ring-cap{font-size:14px;color:var(--muted)} .ring-cap b{color:var(--ink);font-size:16px}
+.hero-txt{min-width:0}
+.goal{display:grid;gap:8px}
+.goal .big{font-size:28px}
+.tag.sale{background:var(--sale-soft);color:var(--sale)}
+.salebtn{border:0;background:var(--sale);color:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.salebtn:disabled{opacity:.4;cursor:not-allowed}
+:root[data-theme="dark"] .salebtn{color:#160D2B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .salebtn{color:#160D2B}}
+.lock{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.lock-ico{width:48px;height:48px;border-radius:12px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.lock-ico svg{width:24px;height:24px}
+.lock-txt{flex:1;min-width:0}
+.lock-txt h2{font-size:20px}
+.lock-form{display:flex;gap:10px;flex-wrap:wrap}
+.pin{border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 14px;font-size:24px;letter-spacing:.4em;width:11ch;font-variant-numeric:tabular-nums;text-align:center}
+.pin:focus{border-color:var(--accent);outline:none}
+.unlockbtn{border:0;background:var(--ink);color:var(--bg);border-radius:10px;padding:10px 18px;font-weight:700}
+.lock-err{color:var(--bad);font-weight:600;font-size:14px;margin:8px 0 0;min-height:1.2em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.daycount{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--sunk);border-radius:10px;padding:12px 14px;margin-bottom:16px}
+.day-hint{font-size:13px;color:var(--muted)} .day-hint.warn{color:var(--warn);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:20px;font-weight:700}
+.stepper input{width:70px;height:40px;text-align:center;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.stepper button:disabled,.stepper input:disabled{opacity:.4}
+.motifs{display:flex;flex-wrap:wrap;gap:8px}
+.motifs .chip[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.rdv-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.hist li{flex-wrap:wrap}
+.brows{display:grid;gap:8px}
+.brow{display:grid;grid-template-columns:minmax(90px,170px) 1fr auto;gap:10px;align-items:center;font-size:14px}
+.brow .bar{height:12px}
+.bval{text-align:right;white-space:nowrap;font-size:13px}
+@media (max-width:520px){.brow{grid-template-columns:1fr auto}.brow .bar{grid-column:1/-1;grid-row:2}}
+.keep{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;color:var(--muted);cursor:pointer}
+.keep input{width:18px;height:18px;accent-color:var(--accent)}
+.sync{font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px;white-space:nowrap}
+.sync.ok{background:var(--good-soft);color:var(--good)}
+.sync.busy{background:var(--sunk);color:var(--muted)}
+.sync.warn{background:var(--warn-soft);color:var(--warn)}
+.ch-hero{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}
+.ch-hero>div:first-child{flex:1 1 320px;min-width:0}
+.ch-title{font-size:clamp(22px,3.4vw,30px);font-weight:800;line-height:1.15}
+.ch-pot{background:var(--accent-soft);border-radius:var(--r);padding:16px 22px;min-width:min(100%,240px)}
+.ch-pot-num{font-family:var(--f-display);font-size:48px;font-weight:800;line-height:1;color:var(--accent-ink)}
+.ch-pot-max{font-size:12px;color:var(--muted);margin-top:6px}
+.ch-weeks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.chw{display:grid;gap:12px}
+.chw-encours{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.chw-avenir{opacity:.75}
+.chw-num b{font-family:var(--f-display);font-size:40px;font-weight:800;line-height:1}
+.gauge{position:relative;height:16px;background:var(--sunk);border-radius:99px;margin:4px 0 30px}
+.gauge i{display:block;height:100%;border-radius:99px}
+.gauge .mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.5}
+.gauge .mark.seuil{opacity:.85;width:3px}
+.gauge .mark em{position:absolute;top:26px;transform:translateX(-50%);font-style:normal;font-size:11px;white-space:nowrap;color:var(--muted)}
+.gauge .mark.seuil em{transform:translateX(-85%);color:var(--ink);font-weight:700}
+.chw-hint{margin:0;font-size:14px}
+.ch-rules{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px}
+.ch-cfg input{width:100%;min-width:70px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 8px}
+.login{position:fixed;inset:0;z-index:100;background:var(--bg);overflow:auto;display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px}
+.login-box{width:min(100%,520px);display:grid;gap:14px}
+.login-box .brand b{font-family:var(--f-display);font-size:20px;font-weight:800}
+.login-box .brand small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.priv-note{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.chip.ghost{background:none;color:var(--muted)}
+.resetbtn{border:2px solid var(--bad);background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:8px 14px;font-weight:700}
+.resetbtn.arm{background:var(--bad);color:#fff}
+.resetbtn:disabled{opacity:.4;cursor:not-allowed}
+.cmp-nums{display:flex;gap:20px;flex-wrap:wrap;align-items:baseline}
+.cmp-col .rdv.v{color:var(--sale)}
+
+.seg{display:inline-flex;background:var(--sunk);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:999px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.rowhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.hist{list-style:none;margin:0;padding:0}
+.hist li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.hist li:first-child{border-top:0}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
+.tag.mes{background:var(--mes-soft);color:var(--mes)} .tag.gc{background:var(--gc-soft);color:var(--gc)}
+.hist .when{color:var(--muted);width:92px;flex:none}
+.hist .res{flex:1;min-width:0}
+.del{border:1px solid var(--line);background:none;border-radius:6px;padding:3px 9px;font-size:12px;color:var(--muted)}
+.del.arm{background:var(--bad);color:#fff;border-color:var(--bad)}
+
+/* Analyse */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:560px){.cmp{grid-template-columns:1fr}}
+.cmp-col{border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.cmp-col.mes{background:var(--mes-soft)} .cmp-col.gc{background:var(--gc-soft)}
+.cmp-col h3{font-size:18px}
+.cmp-col .rdv{font-family:var(--f-display);font-size:40px;font-weight:800;line-height:1}
+.cmp-col.mes .rdv{color:var(--mes)} .cmp-col.gc .rdv{color:var(--gc)}
+.cmp dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:0;font-size:14px}
+.cmp dt{color:var(--muted)} .cmp dd{margin:0;font-weight:700;text-align:right}
+.verdict{font-size:15px}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:12px;font-family:var(--f-body)}
+.chart .lab{fill:var(--ink);font-weight:700}
+
+/* Réglages */
+.form{display:grid;gap:14px}
+.field{display:grid;gap:4px}
+.field label{font-size:13px;font-weight:700;color:var(--muted)}
+.field input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 11px;width:100%}
+.names{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 12px 10px 16px;border-radius:12px;display:flex;align-items:center;gap:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:50;max-width:calc(100% - 32px)}
+.toast button{background:var(--accent);color:#1B1206;border:0;border-radius:8px;padding:6px 12px;font-weight:700}
+@media (prefers-reduced-motion:no-preference){.bar i,.ring circle{transition:all .6s ease}}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <div class="card login-box">
+    <div class="brand"><div class="brand-dot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1B1206" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><circle cx="12" cy="15" r="2.2"/></svg></div><div><small class="muted">Télésurveillance · RDV en direct</small><b>POC Homiris</b></div></div>
+    <h1 style="font-size:24px">Connexion</h1>
+    <p class="muted" style="margin:0">Choisissez votre nom, puis tapez votre code à 6 chiffres.</p>
+    <div class="who-pick" id="loginWho"></div>
+    <form id="loginForm" class="lock-form">
+      <label for="loginPin" class="sr">Code à 6 chiffres</label>
+      <input id="loginPin" class="pin" inputmode="numeric" autocomplete="current-password" maxlength="6" placeholder="••••••">
+      <button type="submit" class="unlockbtn">Se connecter</button>
+    </form>
+    <label class="keep"><input type="checkbox" id="loginKeep" checked> Rester connecté sur ce poste</label>
+    <p class="lock-err" id="loginErr" role="alert"></p>
+  </div>
+</div>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <div class="brand-dot" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1B1206" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><circle cx="12" cy="15" r="2.2"/></svg></div>
+      <div><small>Télésurveillance · RDV en direct</small><b>POC Homiris</b></div>
+    </div>
+    <span class="sync" id="sync" hidden role="status" aria-live="polite"></span>
+    <a class="homiris" href="https://www.homiris.fr" target="_blank" rel="noopener">Un doute produit ? Site Homiris ↗</a>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="accueil" id="t-accueil">Objectif collectif</button>
+    <button class="tab" role="tab" data-tab="espace" id="t-espace">Mon espace</button>
+    <button class="tab" role="tab" data-tab="challenge" id="t-challenge">Challenge lancement</button>
+    <button class="tab" role="tab" data-tab="bilan" id="t-bilan">Bilan mensuel</button>
+    <button class="tab" role="tab" data-tab="analyse" id="t-analyse">Analyse par type d'appel</button>
+    <button class="tab" role="tab" data-tab="reglages" id="t-reglages">Réglages</button>
+  </nav>
+</header>
+
+<main>
+  <div id="bkWarn" class="notice" hidden><b>Attention :</b> la base en ligne contient beaucoup moins de saisies que la copie de secours de ce poste. Si ce n'est pas un RESET de votre part, ouvrez Réglages › Sauvegardes et cliquez sur « Restaurer ».</div>
+  <div id="lockSoon" class="notice" hidden>Phase de test : les codes d'accès ne sont pas encore demandés. Ils s'activeront automatiquement le <b>lundi 2 novembre 2026 à 8h30</b>.</div>
+  <div id="offline" class="notice" hidden>Connexion à la base impossible. Vérifiez votre connexion internet, puis rechargez la page.</div>
+
+  <!-- ACCUEIL -->
+  <section class="view" id="v-accueil">
+    <div class="card hero">
+      <div class="rings">
+        <div class="ringbox">
+          <div class="ring" aria-label="Avancement de l'objectif RDV">
+            <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--sunk)" stroke-width="12"/><circle id="ringArc" cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 999"/><line class="pace" x1="60" y1="2" x2="60" y2="18" stroke="var(--ink)" stroke-width="2.5" opacity=".6"/></svg>
+            <div class="ring-c"><b id="pct">0 %</b><span>RDV pris</span></div>
+          </div>
+          <div class="ring-cap"><b id="totRdv">0</b> / <span id="totObj">112</span> RDV</div>
+        </div>
+        <div class="ringbox">
+          <div class="ring" aria-label="Avancement de l'objectif installations">
+            <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--sunk)" stroke-width="12"/><circle id="ringArcV" cx="60" cy="60" r="52" fill="none" stroke="var(--sale)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 999"/><line class="pace" x1="60" y1="2" x2="60" y2="18" stroke="var(--ink)" stroke-width="2.5" opacity=".6"/></svg>
+            <div class="ring-c"><b id="pctV">0 %</b><span>installations</span></div>
+          </div>
+          <div class="ring-cap"><b id="totV">0</b> / <span id="totObjV">67,5</span> ventes</div>
+        </div>
+      </div>
+      <div class="hero-txt">
+        <div class="eyebrow">Objectif collectif du POC</div>
+        <h1>Rendez-vous pris et installations vendues</h1>
+        <p class="muted" id="pocDates" style="margin:6px 0 0"></p>
+        <div class="hero-facts">
+          <div class="fact"><b id="paceExp">0</b><span>RDV attendus à date</span></div>
+          <div class="fact"><b id="paceExpV">0</b><span>ventes attendues à date</span></div>
+          <div class="fact"><b id="totCalls">0</b><span>appels passés</span></div>
+          <div class="fact"><b id="convV">–</b><span>des RDV deviennent une vente</span></div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap" id="paceTag"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card month-row">
+        <div class="eyebrow">Ce mois-ci · équipe</div>
+        <div class="goal">
+          <div class="month-head"><div><span class="big" id="mRdv">0</span> <span class="muted">/ <span id="mObj">32</span> RDV</span></div><span id="mTag"></span></div>
+          <div class="bar"><i id="mBar" style="width:0"></i><span class="tick" id="mTick"></span></div>
+        </div>
+        <div class="goal">
+          <div class="month-head"><div><span class="big" id="mV">0</span> <span class="muted">/ <span id="mObjV">19</span> installations</span></div><span id="mTagV"></span></div>
+          <div class="bar"><i id="mBarV" style="width:0;background:var(--sale)"></i><span class="tick" id="mTickV"></span></div>
+        </div>
+        <div class="muted" style="font-size:13px">Le trait marque où l'équipe devrait en être aujourd'hui.</div>
+      </div>
+      <div class="card month-row">
+        <div class="eyebrow">RDV pris par type d'appel</div>
+        <div class="split" id="splitBar"></div>
+        <div class="legend"><span><i style="background:var(--mes)"></i>Mise en service · <b id="sMes">0</b></span><span><i style="background:var(--gc)"></i>Gestion courante · <b id="sGc">0</b></span></div>
+        <div class="eyebrow" style="margin-top:8px">Installations par type d'appel</div>
+        <div class="split" id="splitBarV"></div>
+        <div class="legend"><span><i style="background:var(--mes)"></i>Mise en service · <b id="sMesV">0</b></span><span><i style="background:var(--gc)"></i>Gestion courante · <b id="sGcV">0</b></span></div>
+        <button class="chip" style="justify-self:start" data-goto="analyse">Voir l'analyse détaillée</button>
+      </div>
+    </div>
+
+    <div class="card priv-note" id="rankHidden">
+      <div><div class="eyebrow">Résultats individuels</div><p style="margin:4px 0 0">Vos chiffres personnels et vos objectifs sont dans votre espace.</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" data-goto="espace">Ouvrir mon espace</button></div>
+    </div>
+    <div class="card" id="rankCard">
+      <div class="rowhead" style="margin-bottom:12px"><div><div class="eyebrow">Classement du mois · visible par le responsable uniquement</div><h2 style="font-size:20px">Objectifs individuels : <span id="indObj">5,33</span> RDV et <span id="indObjV">3,21</span> installations / mois</h2></div></div>
+      <div class="tblwrap"><table class="rank"><thead><tr><th></th><th>Conseiller</th><th class="barcell">RDV</th><th class="num">RDV</th><th class="barcell">Installations</th><th class="num">Ventes</th><th class="num">Appels</th><th class="num">RDV / appels</th></tr></thead><tbody id="rankBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- ESPACE -->
+  <section class="view" id="v-espace" hidden>
+    <div>
+      <div class="rowhead" style="margin-bottom:8px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="eyebrow" id="whoLab">Je suis</div><span class="pill good" id="bossPill" hidden>● Mode responsable : tous les espaces sont ouverts</span></div><span style="display:flex;gap:8px"><button class="chip" id="logoutBtn" hidden>Se déconnecter</button><button class="chip" id="bossLogout" hidden>Se déconnecter</button></span></div>
+      <div class="who-pick" id="whoPick"></div>
+    </div>
+
+    <div class="card lock" id="lockCard" hidden>
+      <div class="lock-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <div class="lock-txt">
+        <h2 id="lockTitle">Espace protégé</h2>
+        <p class="muted" id="lockSub" style="margin:4px 0 12px">Saisissez votre code à 6 chiffres pour ouvrir votre espace. Le code responsable fonctionne aussi.</p>
+        <form class="lock-form" data-lock="cc">
+          <label for="pinCC" class="sr">Code à 6 chiffres</label>
+          <input id="pinCC" class="pin" inputmode="numeric" autocomplete="off" maxlength="6" placeholder="••••••">
+          <button type="submit" class="unlockbtn">Ouvrir mon espace</button>
+        </form>
+        <label class="keep"><input type="checkbox" id="keepCC" checked> Rester connecté sur ce poste</label>
+        <p class="lock-err" id="errCC" role="alert"></p>
+      </div>
+    </div>
+
+    <div id="espaceBody">
+
+    <div class="card entry" id="entryCard">
+      <div class="daycount">
+        <div style="min-width:0"><label for="dayTotal"><b>Appels passés aujourd'hui</b></label><div class="day-hint" id="dayHint"></div></div>
+        <div class="stepper"><button data-dc="-1" aria-label="Retirer un appel">−</button><input id="dayTotal" inputmode="numeric" autocomplete="off" placeholder="0"><button data-dc="1" aria-label="Ajouter un appel">+</button></div>
+      </div>
+      <h2>Enregistrer un appel où la télésurveillance a été abordée</h2>
+      <p class="muted" style="margin:4px 0 0">Seulement quand vous avez parlé télésurveillance : le type, puis le résultat. Deux clics.</p>
+      <div class="step">
+        <div class="step-lab">1 · Type d'appel</div>
+        <div class="types">
+          <button class="typebtn" data-t="mes" aria-pressed="false"><b>Mise en service</b><span>Ouverture, nouveau contrat</span></button>
+          <button class="typebtn" data-t="gc" aria-pressed="false"><b>Gestion courante</b><span>Client existant, demande du quotidien</span></button>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-lab">2 · Résultat</div>
+        <div class="outs">
+          <button class="outbtn sans" data-o="sans" disabled>Pas de proposition<small>Sujet abordé, RDV non proposé</small></button>
+          <button class="outbtn refus" data-o="refus" disabled>Proposition refusée<small>RDV proposé, pas accepté</small></button>
+          <button class="outbtn rdv" data-o="rdv" disabled>RDV pris<small>Rendez-vous calé en direct</small></button>
+        </div>
+      </div>
+      <div class="step" id="motifStep" hidden>
+        <div class="step-lab">Motif du refus <span style="font-weight:500">(facultatif, un clic)</span></div>
+        <div class="motifs"><button class="chip" data-motif="deja" aria-pressed="false">Déjà équipé</button><button class="chip" data-motif="locataire" aria-pressed="false">Locataire</button><button class="chip" data-motif="prix" aria-pressed="false">Prix</button><button class="chip" data-motif="moment" aria-pressed="false">Pas le moment</button><button class="chip" data-motif="interet" aria-pressed="false">Pas intéressé</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="rowhead" style="margin-bottom:6px">
+        <div><div class="eyebrow">Mes RDV · suivi des installations</div><h2 style="font-size:20px">Déclarez ici si un RDV a abouti à une vente ou a été annulé.</h2></div>
+        <span id="pendCount" class="pill neutral"></span>
+      </div>
+      <ul class="hist" id="rdvList"></ul>
+    </div>
+
+    <div>
+      <div class="rowhead" style="margin-bottom:12px">
+        <h2 style="font-size:22px">Mes chiffres · <span id="meName"></span></h2>
+        <div class="seg" id="perSeg"><button data-p="jour" aria-pressed="false">Aujourd'hui</button><button data-p="mois" aria-pressed="true">Ce mois</button><button data-p="poc" aria-pressed="false">Tout le POC</button></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b id="kCalls">0</b><span>Appels passés</span></div>
+        <div class="kpi"><b id="kAbord">0</b><span>Abordés · <span id="kAbordP">des appels</span></span></div>
+        <div class="kpi"><b id="kProps">0</b><span>Propositions de RDV</span></div>
+        <div class="kpi hl"><b id="kRdv">0</b><span>RDV pris</span></div>
+        <div class="kpi hlv"><b id="kV">0</b><span>Installations vendues</span></div>
+        <div class="kpi"><b id="kAnn">0</b><span>RDV annulés</span></div>
+        <div class="kpi"><b id="kRate">–</b><span>RDV / appels</span></div>
+        <div class="kpi"><b id="kConv">–</b><span>Ventes / RDV</span></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card month-row">
+        <div class="eyebrow">Mes objectifs du mois</div>
+        <div class="goal">
+          <div class="month-head"><div><span class="big" id="oRdv">0</span> <span class="muted">/ <span id="oObj">5,33</span> RDV</span></div><span id="oTag"></span></div>
+          <div class="bar"><i id="oBar" style="width:0"></i><span class="tick" id="oTick"></span></div>
+        </div>
+        <div class="goal">
+          <div class="month-head"><div><span class="big" id="oV">0</span> <span class="muted">/ <span id="oObjV">3,21</span> installations</span></div><span id="oTagV"></span></div>
+          <div class="bar"><i id="oBarV" style="width:0;background:var(--sale)"></i><span class="tick" id="oTickV"></span></div>
+        </div>
+        <div class="muted" style="font-size:13px" id="oHint"></div>
+      </div>
+      <div class="card">
+        <div class="eyebrow" style="margin-bottom:8px">Mes derniers appels</div>
+        <ul class="hist" id="hist"></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:10px">Mon bilan mois par mois</div>
+      <div class="tblwrap"><table class="rank"><thead><tr><th>Mois</th><th class="num">Appels</th><th class="num">Prop.</th><th class="num">RDV</th><th class="num">Obj. RDV</th><th class="barcell">Atteinte RDV</th><th class="num">Ventes</th><th class="num">Obj. ventes</th><th class="barcell">Atteinte ventes</th><th class="num">RDV / appels</th></tr></thead><tbody id="myMonths"></tbody></table></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- BILAN MENSUEL -->
+  <section class="view" id="v-bilan" hidden>
+    <div class="rowhead">
+      <div><div class="eyebrow">Préparation du retour d'expérience</div><h2 style="font-size:24px">Résultats mois par mois</h2></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="chip" id="copyBilan">Copier le tableau (Excel)</button><button class="chip" id="exportBtn" hidden>Exporter toutes les saisies (CSV)</button></div>
+    </div>
+    <p class="muted" style="margin:0">Les objectifs de chaque mois sont proratisés selon les jours du POC qu'il contient : un mois partiel (comme février) a un objectif réduit d'autant. Une installation compte dans le mois où elle est déclarée vendue. « Appels » = total saisi en fin de journée par chaque CC ; « Abordés » = appels où la télésurveillance a été évoquée.</p>
+    <div class="card">
+      <div class="tblwrap"><table class="rank" id="bilanTbl"><thead><tr><th>Mois</th><th class="num">Appels</th><th class="num">Abordés</th><th class="num">Prop.</th><th class="num">RDV MES</th><th class="num">RDV GC</th><th class="num">RDV total</th><th class="num">Obj. RDV</th><th class="barcell">Atteinte RDV</th><th class="num">Annulés</th><th class="num">Ventes</th><th class="num">Obj. ventes</th><th class="barcell">Atteinte ventes</th><th class="num">RDV / appels</th><th class="num">Ventes / RDV</th></tr></thead><tbody id="bilanBody"></tbody></table></div>
+    </div>
+    <div class="card" id="bilanCCCard">
+      <div class="rowhead" style="margin-bottom:12px">
+        <div><div class="eyebrow">Détail par conseiller · responsable uniquement</div><h2 style="font-size:20px" id="bilanMonthTitle"></h2></div>
+        <div class="seg" id="bilanSeg" style="flex-wrap:wrap"></div>
+      </div>
+      <div class="tblwrap"><table class="rank"><thead><tr><th>Conseiller</th><th class="num">Appels</th><th class="num">Abordés</th><th class="num">Prop.</th><th class="num">RDV</th><th class="num">Obj. RDV</th><th class="barcell">Atteinte RDV</th><th class="num">Annulés</th><th class="num">Ventes</th><th class="num">Obj. ventes</th><th class="barcell">Atteinte ventes</th><th class="num">RDV MES / GC</th></tr></thead><tbody id="bilanCC"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- CHALLENGE -->
+  <section class="view" id="v-challenge" hidden>
+    <div class="card ch-hero">
+      <div>
+        <div class="eyebrow">Challenge lancement · cagnotte commune</div>
+        <h1 class="ch-title">Chaque RDV pris remplit la cagnotte de toute l'équipe</h1>
+        <p class="muted" id="chDates" style="margin:6px 0 0"></p>
+      </div>
+      <div class="ch-pot">
+        <div class="ch-pot-num"><span id="chTotal">0</span> €</div>
+        <div class="muted">dans la cagnotte · soit <b id="chPart">0 €</b> par conseiller</div>
+        <div class="ch-pot-max" id="chMax"></div>
+      </div>
+    </div>
+    <div class="ch-weeks" id="chWeeks"></div>
+    <div class="card ch-bonus" id="chBonus"></div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:8px">Règles du challenge</div>
+      <ul class="ch-rules">
+        <li>Ce qui compte : les <b>RDV pris par toute l'équipe</b> pendant la semaine, du lundi au dimanche. Les RDV annulés sont retirés du compteur.</li>
+        <li>Chaque semaine a deux marches : le <b>palier</b> rapporte une partie de la somme, le <b>seuil</b> rapporte la somme complète.</li>
+        <li>Si le seuil est atteint les trois semaines, un <b>bonus de série</b> s'ajoute à la cagnotte.</li>
+        <li>La cagnotte est partagée à parts égales entre les 6 conseillers à la fin du challenge.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ANALYSE -->
+  <section class="view" id="v-analyse" hidden>
+    <div class="rowhead">
+      <div><div class="eyebrow">Où prend-on le plus de RDV et de ventes ?</div><h2 style="font-size:24px">Mise en service ou Gestion courante</h2></div>
+      <div class="seg" id="anaSeg"><button data-p="mois" aria-pressed="false">Ce mois</button><button data-p="poc" aria-pressed="true">Tout le POC</button></div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:10px">Du premier appel à l'installation</div>
+      <div class="brows" id="funnel"></div>
+      <p class="muted" id="annNote" style="margin:10px 0 0;font-size:13px"></p>
+    </div>
+    <p class="verdict" id="verdict"></p>
+    <div class="cmp" id="cmp"></div>
+    <div class="grid2">
+      <div class="card"><div class="eyebrow" style="margin-bottom:10px">Pourquoi les clients refusent</div><div class="brows" id="motifs"></div></div>
+      <div class="card"><div class="eyebrow" style="margin-bottom:10px">RDV pris selon le jour</div><div class="brows" id="byDay"></div></div>
+    </div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:10px">RDV pris selon l'heure</div><div class="brows" id="byHour"></div></div>
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:10px">RDV pris et installations vendues par mois</div>
+      <div id="monthChart"></div>
+      <div class="legend"><span><i style="background:var(--mes)"></i>RDV Mise en service</span><span><i style="background:var(--gc)"></i>RDV Gestion courante</span><span><i style="background:var(--sale)"></i>Installations vendues</span><span><i style="background:var(--ink);opacity:.55;height:2px"></i>Objectif RDV du mois</span></div>
+    </div>
+    <div class="card" id="ccTypeCard">
+      <div class="eyebrow" style="margin-bottom:10px">Détail par conseiller · responsable uniquement</div>
+      <div class="tblwrap"><table class="rank"><thead><tr><th>Conseiller</th><th class="num">Taux d'abord</th><th class="num">RDV MES</th><th class="num">RDV / abordés MES</th><th class="num">Ventes MES</th><th class="num">RDV GC</th><th class="num">RDV / abordés GC</th><th class="num">Ventes GC</th><th class="num">RDV annulés</th></tr></thead><tbody id="ccType"></tbody></table></div>
+    </div>
+  </section>
+
+  <!-- REGLAGES -->
+  <section class="view" id="v-reglages" hidden>
+    <div class="card lock" id="lockAdmin" hidden>
+      <div class="lock-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <div class="lock-txt">
+        <h2>Réglages réservés au responsable</h2>
+        <p class="muted" style="margin:4px 0 12px">Vous êtes connecté avec un compte conseiller. Pour modifier les réglages, reconnectez-vous avec le code responsable.</p>
+        <button class="unlockbtn" id="reloginBoss" type="button">Se reconnecter en responsable</button>
+      </div>
+    </div>
+    <div id="reglagesBody" class="view">
+    <div class="rowhead"><span class="pill good" id="adminPill">● Mode responsable : accès à tous les espaces</span><button class="chip" id="adminLogout">Se déconnecter</button></div>
+    <div class="card form">
+      <h2 style="font-size:20px">Conseillers du POC</h2>
+      <div class="names" id="namesForm"></div>
+    </div>
+    <div class="card form">
+      <h2 style="font-size:20px">Cadre du POC</h2>
+      <div class="names">
+        <div class="field"><label for="cfgStart">Date de démarrage</label><input type="date" id="cfgStart"></div>
+        <div class="field"><label for="cfgDur">Durée (mois)</label><input type="number" id="cfgDur" step="0.5" min="0.5"></div>
+        <div class="field"><label for="cfgObj">Objectif collectif RDV</label><input type="number" id="cfgObj" step="1" min="1"></div>
+        <div class="field"><label for="cfgObjV">Objectif collectif installations</label><input type="number" id="cfgObjV" step="0.5" min="0.5"></div>
+      </div>
+      <p class="muted" id="cfgSum" style="margin:0"></p>
+    </div>
+    <div class="card form" style="border-color:var(--bad)">
+      <h2 style="font-size:20px">Remise à zéro</h2>
+      <p class="muted" style="margin:0">Remet tous les compteurs à zéro, pour tous les conseillers. Les saisies ne sont pas effacées : elles sont archivées et peuvent être restaurées ci-dessous. Les noms et les objectifs sont conservés.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="resetbtn" id="resetBtn">RESET des données</button>
+        <button class="chip" id="resetCancel" hidden>Annuler</button>
+        <span class="muted" id="resetInfo" style="font-size:13px"></span>
+      </div>
+    </div>
+    <div class="card form">
+      <h2 style="font-size:20px">Challenge lancement</h2>
+      <p class="muted" style="margin:0">Modifiez les seuils et montants à tout moment : l'onglet Challenge se met à jour aussitôt pour toute l'équipe.</p>
+      <div class="tblwrap"><table class="rank ch-cfg"><thead><tr><th>Semaine</th><th>Début (lundi)</th><th class="num">Palier (RDV)</th><th class="num">Gain palier (€)</th><th class="num">Seuil (RDV)</th><th class="num">Gain seuil (€)</th></tr></thead><tbody id="chCfg"></tbody></table></div>
+      <div class="names"><div class="field"><label for="chBonusIn">Bonus de série si les 3 seuils sont atteints (€)</label><input type="number" id="chBonusIn" min="0" step="5"></div></div>
+    </div>
+    <div class="card form">
+      <h2 style="font-size:20px">Sauvegardes et corbeille</h2>
+      <p class="muted" style="margin:0">Chaque saisie est enregistrée en ligne dès le clic, et une copie de secours de toute la base est tenue à jour automatiquement sur chaque poste qui ouvre le site. Une saisie supprimée va à la corbeille, elle n'est jamais effacée.</p>
+      <p style="margin:0" id="bkInfo"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="chip" id="bkRestore" hidden></button></div>
+      <p style="margin:0" id="rsInfo"></p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="chip" id="rsRestore" hidden>Restaurer les saisies du dernier RESET</button></div>
+      <div class="eyebrow" style="margin-top:6px">Corbeille</div>
+      <ul class="hist" id="trash"></ul>
+    </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastUndo">Annuler</button></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+const CH_DEF = {bonus:30, weeks:[
+  {start:"2026-11-02", palier:4, mPalier:25, seuil:6, mSeuil:50},
+  {start:"2026-11-09", palier:5, mPalier:30, seuil:8, mSeuil:60},
+  {start:"2026-11-16", palier:6, mPalier:35, seuil:9, mSeuil:70}]};
+const DEF = {names:["Julien","Caroline","Aurélie","Sophie","Cathy","Aurore"], start:"2026-11-02", duree:3.5, objectif:112, objVentes:67.5};
+const CCS = ["cc1","cc2","cc3","cc4","cc5","cc6"];
+const OUT = {sans:"Abordé, sans proposition", refus:"Proposition refusée", rdv:"RDV pris"};
+const TYPE = {mes:"Mise en service", gc:"Gestion courante"};
+const S = {cfg:{...DEF}, appels:new Map(), jours:new Map(), busyUntil:0, cc:null, user:null, loginKey:null, tab:"accueil", per:"mois", anaPer:"poc", type:null, db:null};
+const $ = id => document.getElementById(id);
+const ss = {get(k){try{return sessionStorage.getItem(k)}catch(e){return null}}, set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}}};
+const lsx = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+/* Connexion : un compte Firebase par conseiller (cc1…cc6) et un compte responsable, mot de passe = code à 6 chiffres */
+const EMAIL_DOMAIN = "homiris.example.com";
+const meKey = () => S.user && S.user.email ? S.user.email.split("@")[0] : null;
+const isAdmin = () => meKey()==="responsable";
+const canUse = cc => !!cc && (isAdmin() || meKey()===cc);
+const locksOn = () => true;
+const ls = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+S.cc = CCS.includes(ls.get("poc_cc")) ? ls.get("poc_cc") : null;
+S.tab = ls.get("poc_tab") || (S.cc ? "espace" : "accueil"); S.bilanM = null;
+if(location.hash && ["accueil","espace","challenge","bilan","analyse","reglages"].includes(location.hash.slice(1))) S.tab = location.hash.slice(1);
+
+const fmt = (n,d=0) => n.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct = (a,b) => b ? fmt(100*a/b, 0)+" %" : "–";
+const pad = n => String(n).padStart(2,"0");
+const dstr = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const today = () => dstr(new Date());
+const mkey = s => s.slice(0,7);
+const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+const MOISL = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const parseD = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+const nice = s => { const d = parseD(s); return d.getDate()+" "+MOISL[d.getMonth()]+" "+d.getFullYear(); };
+function endDate(){ const d = parseD(S.cfg.start); const whole = Math.floor(S.cfg.duree); const e = new Date(d.getFullYear(), d.getMonth()+whole, d.getDate()); e.setDate(e.getDate()+Math.round((S.cfg.duree-whole)*30.44)); return e; }
+const monthObj = (tot=S.cfg.objectif) => tot / S.cfg.duree;
+const indObj = (tot=S.cfg.objectif) => monthObj(tot) / CCS.length;
+function pocMonths(){ const s=parseD(S.cfg.start), e=endDate(), out=[]; for(let d=new Date(s.getFullYear(),s.getMonth(),1); d<e; d.setMonth(d.getMonth()+1)) out.push(d.getFullYear()+"-"+pad(d.getMonth()+1)); return out; }
+function monthTargets(tot=S.cfg.objectif){ // mois pleins = objectif mensuel ; mois partiel de départ proratisé ; le dernier mois reçoit le reste pour que la somme fasse l'objectif
+  const s=parseD(S.cfg.start), e=endDate(), ms=pocMonths(), mo=monthObj(tot), out={}; let sum=0;
+  ms.forEach((m,i)=>{ const [y,mm]=m.split("-").map(Number); const a=new Date(y,mm-1,1), b=new Date(y,mm,1);
+    const days=Math.round((Math.min(b,e)-Math.max(a,s))/864e5), dim=Math.round((b-a)/864e5);
+    out[m] = i===ms.length-1 && ms.length>1 ? Math.max(0,tot-sum) : mo*Math.max(0,days)/dim; sum+=out[m]; });
+  return out; }
+const curTarget = (tot=S.cfg.objectif) => monthTargets(tot)[mkey(today())] || monthObj(tot);
+function monthList(){ const set=new Set(pocMonths()); allEvents().forEach(e=>set.add(mkey(e.date))); return [...set].sort(); }
+const mlabel = m => { const [y,mm]=m.split("-"); return MOISL[+mm-1].replace(/^./,c=>c.toUpperCase())+" "+y; };
+const atteinte = (v,o,mf,color) => { if(!o) return '<span class="muted">hors POC</span>'; const p=Math.min(100,100*v/o); return '<div class="bar"><i style="width:'+p+'%;background:'+(v>=o?'var(--good)':(color||'var(--accent)'))+'"></i>'+(mf!=null?'<span class="tick" style="left:'+(mf*100)+'%"></span>':'')+'</div><div style="font-size:12px;margin-top:3px" class="muted">'+fmt(100*v/o,0)+' %</div>'; };
+const name = cc => (S.cfg.names[CCS.indexOf(cc)] || "").trim() || DEF.names[CCS.indexOf(cc)];
+const OV = () => S.cfg.objVentes;
+
+/* Chaque appel est un enregistrement « appel ». Une installation vendue est rattachée à son RDV d'origine
+   et produit en plus un enregistrement « vente » daté du jour où elle a été déclarée. */
+/* Modèle : une fiche par saisie (collection "appels", id = conseiller_horodatage) et une fiche par conseiller et par jour
+   pour le total d'appels (collection "jours", id = conseiller_date). Chaque écriture ne touche qu'une fiche :
+   deux postes ou deux onglets ne peuvent pas s'écraser. Rien n'est effacé : une suppression met en corbeille,
+   un RESET archive. Un RDV peut être déclaré vendu (vente datée du jour de la déclaration) ou annulé. */
+const MOTIFS = {deja:"Déjà équipé", locataire:"Locataire", prix:"Prix", moment:"Pas le moment", interet:"Pas intéressé"};
+const okDate = d => typeof d==="string" && /^\d{4}-\d{2}-\d{2}$/.test(d);
+const live = r => !!r && !r.supprime && !r.archive;
+const splitKey = k => { const i=k.indexOf("_"); return [k.slice(0,i), k.slice(i+1)]; };
+function allEvents(){ const out=[], days=new Map();
+  for(const r of S.appels.values()){ if(!live(r) || !CCS.includes(r.cc) || !okDate(r.date)) continue; const k=r.cc+"_"+r.date; days.set(k,(days.get(k)||0)+1);
+    out.push({kind:"appel", id:r.id, cc:r.cc, date:r.date, t:r.t, type:r.type, issue:r.issue, motif:r.motif||null, vente:!!r.vente&&!r.annule, venteDate:r.venteDate, annule:!!r.annule});
+    if(r.issue==="rdv" && r.vente && !r.annule && okDate(r.venteDate)) out.push({kind:"vente", cc:r.cc, date:r.venteDate, t:r.venteT||r.t, type:r.type, rdvDate:r.date}); }
+  const keys=new Set(days.keys()); for(const [k,j] of S.jours) if(live(j) && typeof j.total==="number") keys.add(k);
+  for(const k of keys){ const j=S.jours.get(k), [cc,date]=splitKey(k); if(!CCS.includes(cc) || !okDate(date)) continue;
+    out.push({kind:"jour", cc, date, total: live(j)&&typeof j.total==="number" ? j.total : null, logged:days.get(k)||0}); }
+  return out; }
+function stats(evs){ const z=()=>({calls:0,props:0,rdv:0,ventes:0,annules:0});
+  const s={calls:0, abordes:0, props:0, rdv:0, ventes:0, annules:0, motifs:{}, mes:z(), gc:z()};
+  for(const e of evs){ const k=s[e.type];
+    if(e.kind==="jour"){ s.calls += e.total!=null ? Math.max(e.total, e.logged) : e.logged; continue; }
+    if(e.kind==="vente"){ s.ventes++; if(k) k.ventes++; continue; }
+    s.abordes++; if(k) k.calls++;
+    if(e.issue!=="sans"){ s.props++; if(k) k.props++; }
+    if(e.issue==="refus"){ const m=e.motif||"nr"; s.motifs[m]=(s.motifs[m]||0)+1; }
+    if(e.issue==="rdv"){ s.rdv++; if(k) k.rdv++; if(e.annule){ s.annules++; if(k) k.annules++; } } }
+  return s; }
+function perFilter(p){ const t=today(), m=mkey(t); return p==="jour" ? e=>e.date===t : p==="mois" ? e=>mkey(e.date)===m : ()=>true; }
+function monthFrac(){ const n=new Date(); const dim=new Date(n.getFullYear(), n.getMonth()+1, 0).getDate(); return n.getDate()/dim; }
+function paceTag(actual, expected, lab){ lab=lab?lab+" · ":""; if(expected<0.5) return '<span class="pill neutral">'+lab+'Démarrage</span>'; const r=actual/expected; return r>=1 ? '<span class="pill good">● '+lab+'En avance</span>' : r>=0.8 ? '<span class="pill warn">● '+lab+'Léger retard</span>' : '<span class="pill bad">● '+lab+'En retard</span>'; }
+const fmtObj = v => fmt(v, Number.isInteger(Math.round(v*100)/100) ? 0 : 2);
+
+/* ---------- verrous ---------- */
+function renderLocks(){
+  const logged=!!S.user, boss=isAdmin();
+  $("login").hidden=logged;
+  if(logged && !boss) S.cc=meKey();
+  const open=canUse(S.cc);
+  $("espaceBody").hidden=!open; $("lockCard").hidden=true;
+  $("logoutBtn").hidden=!logged || boss;
+  $("lockSoon").hidden=true;
+  $("bkWarn").hidden=!(S.bkWarn && boss);
+  $("bossPill").hidden=!boss; $("bossLogout").hidden=!boss;
+  $("whoLab").textContent = boss ? "Consulter l'espace de" : "Connecté en tant que";
+  $("rankCard").hidden=!boss; $("rankHidden").hidden=boss;
+  $("bilanCCCard").hidden=!boss; $("ccTypeCard").hidden=!boss;
+  $("lockAdmin").hidden=boss; $("reglagesBody").hidden=!boss;
+}
+function cachedNames(){ try{ const n=JSON.parse(lsx.get("poc_names")||"null"); return Array.isArray(n)?n:null; }catch(e){ return null; } }
+function renderLogin(){ const names=cachedNames();
+  const lab=(cc,i)=> (S.cfg.names[i]||"").trim() || (names&&names[i]) || DEF.names[i];
+  $("loginWho").innerHTML = CCS.map((cc,i)=>'<button type="button" class="chip" data-login="'+cc+'" aria-pressed="'+(S.loginKey===cc)+'">'+esc(lab(cc,i))+'</button>').join("")+
+    '<button type="button" class="chip ghost" data-login="responsable" aria-pressed="'+(S.loginKey==="responsable")+'">Responsable</button>'; }
+document.addEventListener("submit", async e=>{ if(e.target.id!=="loginForm") return; e.preventDefault();
+  const key=S.loginKey, pin=$("loginPin").value.trim(), err=$("loginErr");
+  if(!AUTH){ err.textContent="Le site n'est pas encore relié à la base. Prévenez le responsable du POC."; return; }
+  if(!key){ err.textContent="Choisissez d'abord votre nom."; return; }
+  if(!/^\d{6}$/.test(pin)){ err.textContent="Le code comporte 6 chiffres."; return; }
+  err.textContent="Connexion…";
+  try{ await AUTH.setPersistence($("loginKeep").checked ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION);
+    await AUTH.signInWithEmailAndPassword(key+"@"+EMAIL_DOMAIN, pin); $("loginPin").value=""; err.textContent=""; }
+  catch(x){ const c=x&&x.code; $("loginPin").value="";
+    err.textContent = c==="auth/too-many-requests" ? "Trop d'essais. Patientez quelques minutes avant de réessayer." : c==="auth/network-request-failed" ? "Pas de connexion internet. Vérifiez puis réessayez." : "Code incorrect. Vérifiez et réessayez.";
+    $("loginPin").focus(); } });
+const logout = e => { if(e) e.stopPropagation(); S.type=null; S.lastRefus=null; if(AUTH) AUTH.signOut(); };
+$("logoutBtn").addEventListener("click", logout);
+$("bossLogout").addEventListener("click", logout);
+$("adminLogout").addEventListener("click", logout);
+$("reloginBoss").addEventListener("click", e=>{ S.loginKey="responsable"; logout(e); });
+
+/* ---------- rendu ---------- */
+function render(){ renderLocks(); renderTabs(); renderAccueil(); renderEspace(); renderChallenge(); renderBilan(); renderAnalyse(); renderReglages(); }
+
+function renderTabs(){ document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===S.tab)); ["accueil","espace","challenge","bilan","analyse","reglages"].forEach(v=>$("v-"+v).hidden = v!==S.tab); }
+
+function setRing(id, v, o, frac){ const C=2*Math.PI*52; const el=$(id); el.setAttribute("stroke-dasharray",(C*Math.min(1,o?v/o:0))+" "+C); el.parentNode.querySelector(".pace").setAttribute("transform","rotate("+(frac*360)+" 60 60)"); }
+function setBar(id, v, o, mf, color){ const el=$(id); el.style.width=(o?Math.min(100,100*v/o):0)+"%"; el.style.background = o && v>=o ? "var(--good)" : color; if(mf!=null) $(id.replace("Bar","Tick")).style.left=(mf*100)+"%"; }
+
+function renderAccueil(){
+  const evs=allEvents(), st=stats(evs), obj=S.cfg.objectif, objV=OV();
+  const start=parseD(S.cfg.start), end=endDate(), now=new Date();
+  const frac=Math.min(1,Math.max(0,(now-start)/(end-start)));
+  $("totRdv").textContent=fmt(st.rdv); $("totObj").textContent=fmtObj(obj); $("totCalls").textContent=fmt(st.calls);
+  $("totV").textContent=fmt(st.ventes); $("totObjV").textContent=fmtObj(objV);
+  $("pct").textContent=fmt(Math.min(999,100*st.rdv/obj))+" %"; $("pctV").textContent=fmt(Math.min(999,100*st.ventes/objV))+" %";
+  $("paceExp").textContent=fmt(obj*frac,0); $("paceExpV").textContent=fmt(objV*frac,0);
+  $("convV").textContent=pct(st.ventes,st.rdv);
+  setRing("ringArc", st.rdv, obj, frac); setRing("ringArcV", st.ventes, objV, frac);
+  $("pocDates").textContent = now<start ? "Démarrage le "+nice(S.cfg.start)+" · fin prévue le "+nice(dstr(end))+" (retour d'expérience)" : "Du "+nice(S.cfg.start)+" au "+nice(dstr(end))+" · retour d'expérience à l'issue";
+  $("paceTag").innerHTML = now<start ? '<span class="pill neutral">Le POC n\'a pas encore démarré</span>' : paceTag(st.rdv, obj*frac, "RDV")+paceTag(st.ventes, objV*frac, "Installations");
+  // mois
+  const mEv=evs.filter(perFilter("mois")), ms=stats(mEv), mo=curTarget(), moV=curTarget(objV), mf=monthFrac();
+  $("mRdv").textContent=fmt(ms.rdv); $("mObj").textContent=fmt(mo,0); setBar("mBar", ms.rdv, mo, mf, "var(--accent)");
+  $("mV").textContent=fmt(ms.ventes); $("mObjV").textContent=fmt(moV,0); setBar("mBarV", ms.ventes, moV, mf, "var(--sale)");
+  $("mTag").innerHTML = '<span class="pill neutral">'+pct(ms.rdv,mo)+'</span>'; $("mTagV").innerHTML = '<span class="pill neutral">'+pct(ms.ventes,moV)+'</span>';
+  // répartition
+  const split=(id,a,b)=>{ const t=a+b; $(id).innerHTML = t ? '<div class="m" style="width:'+(100*a/t)+'%"></div><div class="g" style="width:'+(100*b/t)+'%"></div>' : ''; };
+  split("splitBar", st.mes.rdv, st.gc.rdv); $("sMes").textContent=fmt(st.mes.rdv); $("sGc").textContent=fmt(st.gc.rdv);
+  split("splitBarV", st.mes.ventes, st.gc.ventes); $("sMesV").textContent=fmt(st.mes.ventes); $("sGcV").textContent=fmt(st.gc.ventes);
+  // classement
+  const io=mo/CCS.length, iv=moV/CCS.length; $("indObj").textContent=fmt(io,2); $("indObjV").textContent=fmt(iv,2);
+  const rows=CCS.map(cc=>({cc, s:stats(mEv.filter(e=>e.cc===cc))})).sort((a,b)=>b.s.rdv-a.s.rdv || b.s.ventes-a.s.ventes || b.s.calls-a.s.calls);
+  $("rankBody").innerHTML = rows.map((r,i)=>'<tr><td class="pos">'+(i+1)+'</td><td class="who">'+esc(name(r.cc))+'</td><td class="barcell">'+atteinte(r.s.rdv,io,mf).split('<div style')[0]+'</td><td class="num"><b>'+fmt(r.s.rdv)+'</b> <span class="muted">/ '+fmt(io,2)+'</span></td><td class="barcell">'+atteinte(r.s.ventes,iv,mf,'var(--sale)').split('<div style')[0]+'</td><td class="num"><b>'+fmt(r.s.ventes)+'</b> <span class="muted">/ '+fmt(iv,2)+'</span></td><td class="num">'+fmt(r.s.calls)+'</td><td class="num">'+pct(r.s.rdv,r.s.calls)+'</td></tr>').join("");
+}
+
+function whenLabel(t, date){ const d=new Date(t); return (date===today()?"Auj. ":d.getDate()+" "+MOIS[d.getMonth()]+" ")+pad(d.getHours())+":"+pad(d.getMinutes()); }
+const shortDate = s => { const d=parseD(s); return d.getDate()+" "+MOIS[d.getMonth()]; };
+
+function renderEspace(){
+  $("whoPick").innerHTML = (isAdmin()?CCS:CCS.filter(cc=>cc===S.cc)).map(cc=>'<button class="chip" data-cc="'+cc+'" aria-pressed="'+(cc===S.cc)+'">'+esc(name(cc))+'</button>').join("");
+  const has=!!S.cc, editable=has&&!!S.db;
+  $("meName").textContent = has ? name(S.cc) : "choisissez votre nom ci-dessus";
+  document.querySelectorAll(".typebtn").forEach(b=>{ b.setAttribute("aria-pressed", b.dataset.t===S.type); b.disabled=!editable; });
+  document.querySelectorAll(".outbtn").forEach(b=>b.disabled=!editable||!S.type);
+  document.querySelectorAll("#perSeg button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.p===S.per));
+  // motif
+  const lr=S.lastRefus && S.lastRefus.cc===S.cc ? S.lastRefus : null;
+  $("motifStep").hidden=!lr;
+  if(lr){ const ev=S.appels.get(lr.cc+"_"+lr.t); document.querySelectorAll("[data-motif]").forEach(b=>b.setAttribute("aria-pressed", !!ev && ev.motif===b.dataset.motif)); }
+  // compteur du jour
+  const dayB=S.jours.get(S.cc+"_"+today()), dayTot=live(dayB)&&typeof dayB.total==="number"?dayB.total:null;
+  let dayLog=0; for(const x of S.appels.values()) if(live(x)&&x.cc===S.cc&&x.date===today()) dayLog++;
+  const inp=$("dayTotal"); if(document.activeElement!==inp) inp.value = dayTot!=null ? dayTot : "";
+  inp.disabled=!editable; document.querySelectorAll("[data-dc]").forEach(b=>b.disabled=!editable);
+  $("dayHint").textContent = !has ? "" : dayTot==null ? (dayLog ? "À renseigner avant de partir : "+dayLog+" appel"+(dayLog>1?"s":"")+" abordé"+(dayLog>1?"s":"")+" saisi"+(dayLog>1?"s":"")+" aujourd'hui." : "À renseigner une fois, en fin de journée.") : dayTot<dayLog ? "Le total est inférieur aux "+dayLog+" appels abordés saisis : vérifiez." : "Enregistré · "+dayLog+" abordé"+(dayLog>1?"s":"")+" sur "+dayTot+".";
+  $("dayHint").className = "day-hint" + (has && dayTot!=null && dayTot<dayLog ? " warn" : "");
+  // chiffres
+  const mine=allEvents().filter(e=>e.cc===S.cc);
+  const st=stats(mine.filter(perFilter(S.per)));
+  $("kCalls").textContent=fmt(st.calls); $("kAbord").textContent=fmt(st.abordes); $("kAbordP").textContent=st.calls?pct(st.abordes,st.calls)+" des appels":"des appels";
+  $("kProps").textContent=fmt(st.props); $("kRdv").textContent=fmt(st.rdv); $("kV").textContent=fmt(st.ventes); $("kAnn").textContent=fmt(st.annules);
+  $("kRate").textContent=pct(st.rdv,st.calls);
+  const allMine=stats(mine); $("kConv").textContent=pct(allMine.ventes, allMine.rdv);
+  const io=curTarget()/CCS.length, iv=curTarget(OV())/CCS.length, m=stats(mine.filter(perFilter("mois"))), mf=monthFrac();
+  $("oRdv").textContent=fmt(m.rdv); $("oObj").textContent=fmt(io,2); setBar("oBar", m.rdv, io, mf, "var(--accent)");
+  $("oV").textContent=fmt(m.ventes); $("oObjV").textContent=fmt(iv,2); setBar("oBarV", m.ventes, iv, mf, "var(--sale)");
+  $("oTag").innerHTML = m.rdv>=io ? '<span class="pill good">✓ Atteint</span>' : paceTag(m.rdv, io*mf);
+  $("oTagV").innerHTML = m.ventes>=iv ? '<span class="pill good">✓ Atteint</span>' : paceTag(m.ventes, iv*mf);
+  const rest=Math.max(0, Math.ceil(io-m.rdv)), restV=Math.max(0, Math.ceil(iv-m.ventes));
+  $("oHint").textContent = !has ? "" : (rest||restV) ? "Encore "+(rest?rest+" RDV":"")+(rest&&restV?" et ":"")+(restV?restV+" installation"+(restV>1?"s":""):"")+" pour atteindre vos objectifs du mois." : "Objectifs du mois atteints. Chaque résultat en plus compte pour l'équipe.";
+  const calls=mine.filter(e=>e.kind==="appel");
+  const last=[...calls].sort((a,b)=>b.t-a.t).slice(0,12);
+  const resLab=e=> e.issue==="rdv" ? "<b>RDV pris</b>"+(e.vente?' <span class="tag sale">vendu</span>':'')+(e.annule?' <span class="tag bad">annulé</span>':'') : e.issue==="refus" ? "Proposition refusée"+(e.motif?' <span class="muted">· '+MOTIFS[e.motif]+'</span>':'') : OUT[e.issue];
+  $("hist").innerHTML = !has ? '<li class="muted">Choisissez votre nom pour voir vos appels.</li>' : !last.length ? '<li class="muted">Aucun appel enregistré pour l\'instant. Votre premier appel apparaîtra ici.</li>' :
+    last.map(e=>'<li><span class="when">'+whenLabel(e.t,e.date)+'</span><span class="tag '+e.type+'">'+(e.type==="mes"?"MES":"GC")+'</span><span class="res">'+resLab(e)+'</span><button class="del" data-del="'+e.t+'" data-date="'+e.date+'">Supprimer</button></li>').join("");
+  // suivi des RDV
+  const rank=e=> (!e.vente&&!e.annule)?0:1;
+  const rdvs=calls.filter(e=>e.issue==="rdv").sort((a,b)=>rank(a)-rank(b) || b.t-a.t).slice(0,30);
+  const pend=calls.filter(e=>e.issue==="rdv"&&!e.vente&&!e.annule).length;
+  $("pendCount").textContent = has ? pend+" RDV en attente" : ""; $("pendCount").hidden=!has;
+  const dis=S.db?'':' disabled';
+  $("rdvList").innerHTML = !has ? '<li class="muted">Choisissez votre nom pour suivre vos RDV.</li>' : !rdvs.length ? '<li class="muted">Vos RDV pris apparaîtront ici. Quand l\'un d\'eux aboutit à une installation ou est annulé, vous le déclarez en un clic.</li>' :
+    rdvs.map(e=>'<li><span class="when">RDV '+shortDate(e.date)+'</span><span class="tag '+e.type+'">'+(e.type==="mes"?"MES":"GC")+'</span><span class="res">'+
+      (e.vente?'<span class="tag sale">Installation vendue · '+shortDate(e.venteDate)+'</span>':e.annule?'<span class="tag bad">RDV annulé</span>':'<span class="muted">En attente</span>')+'</span>'+
+      (e.vente?'<button class="del" data-unsale="'+e.t+'" data-date="'+e.date+'">Retirer</button>'
+       :e.annule?'<button class="del" data-unannul="'+e.t+'" data-date="'+e.date+'">Rétablir</button>'
+       :'<span class="rdv-acts"><button class="del" data-annul="'+e.t+'" data-date="'+e.date+'"'+dis+'>RDV annulé</button><button class="salebtn" data-sale="'+e.t+'" data-date="'+e.date+'"'+dis+'>Installation vendue</button></span>')+'</li>').join("");
+}
+
+function barRows(rows, total, color){ const max=Math.max(1,...rows.map(r=>r.v));
+  return rows.map(r=>'<div class="brow"><span class="blab">'+r.l+'</span><div class="bar"><i style="width:'+(100*r.v/max)+'%;background:'+(r.c||color)+'"></i></div><span class="bval"><b>'+fmt(r.v)+'</b>'+(r.sub!=null?' <span class="muted">'+r.sub+'</span>':(total?' <span class="muted">'+pct(r.v,total)+'</span>':''))+'</span></div>').join(""); }
+
+function renderAnalyse(){
+  document.querySelectorAll("#anaSeg button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.p===S.anaPer));
+  const evs=allEvents().filter(perFilter(S.anaPer)), st=stats(evs);
+  const col=(k)=>{ const s=st[k]; return '<div class="cmp-col '+k+'"><h3>'+TYPE[k]+'</h3><div class="cmp-nums"><div><span class="rdv">'+fmt(s.rdv)+'</span> <span class="muted">RDV</span></div><div><span class="rdv v">'+fmt(s.ventes)+'</span> <span class="muted">ventes</span></div></div><dl><dt>Appels abordés</dt><dd>'+fmt(s.calls)+'</dd><dt>Propositions</dt><dd>'+fmt(s.props)+'</dd><dt>RDV / appels abordés</dt><dd>'+pct(s.rdv,s.calls)+'</dd><dt>RDV / propositions</dt><dd>'+pct(s.rdv,s.props)+'</dd><dt>RDV annulés</dt><dd>'+fmt(s.annules)+'</dd><dt>Ventes / RDV</dt><dd>'+pct(s.ventes,s.rdv)+'</dd><dt>Part des RDV</dt><dd>'+pct(s.rdv,st.rdv)+'</dd><dt>Part des ventes</dt><dd>'+pct(s.ventes,st.ventes)+'</dd></dl></div>'; };
+  $("cmp").innerHTML = col("mes")+col("gc");
+  const a=st.mes, b=st.gc;
+  if(!st.abordes) $("verdict").innerHTML='<span class="muted">Pas encore d\'appel enregistré sur cette période. La comparaison apparaîtra dès les premières saisies.</span>';
+  else { const ra=a.calls?a.rdv/a.calls:0, rb=b.calls?b.rdv/b.calls:0;
+    const more = a.rdv===b.rdv ? "Autant de RDV en Mise en service qu'en Gestion courante" : (a.rdv>b.rdv?"<b>Mise en service</b>":"<b>Gestion courante</b>")+" apporte le plus de RDV ("+fmt(Math.max(a.rdv,b.rdv))+" contre "+fmt(Math.min(a.rdv,b.rdv))+")";
+    const conv = (a.calls&&b.calls&&ra!==rb) ? ", et "+(ra>rb?"la Mise en service":"la Gestion courante")+" convertit le mieux ("+fmt(100*Math.max(ra,rb),0)+" % des appels abordés deviennent un RDV)." : ".";
+    const sv = st.ventes ? " Côté installations : "+(a.ventes===b.ventes?"autant de ventes des deux côtés.":(a.ventes>b.ventes?"<b>Mise en service</b>":"<b>Gestion courante</b>")+" en génère le plus ("+fmt(Math.max(a.ventes,b.ventes))+" contre "+fmt(Math.min(a.ventes,b.ventes))+").") : "";
+    $("verdict").innerHTML = more+conv+sv; }
+  // entonnoir
+  $("funnel").innerHTML = barRows([
+    {l:"Appels passés", v:st.calls, sub:"", c:"var(--muted)"},
+    {l:"Télésurveillance abordée", v:st.abordes, sub:pct(st.abordes,st.calls)+" des appels", c:"var(--mes)"},
+    {l:"RDV proposé", v:st.props, sub:pct(st.props,st.abordes)+" des abordés", c:"var(--gc)"},
+    {l:"RDV pris", v:st.rdv, sub:pct(st.rdv,st.props)+" des propositions", c:"var(--accent)"},
+    {l:"Installation vendue", v:st.ventes, sub:pct(st.ventes,st.rdv)+" des RDV", c:"var(--sale)"}], 0);
+  $("annNote").textContent = st.rdv ? fmt(st.annules)+" RDV annulé"+(st.annules>1?"s":"")+" sur "+fmt(st.rdv)+" ("+pct(st.annules,st.rdv)+")." : "";
+  // motifs
+  const nRef=Object.values(st.motifs).reduce((x,y)=>x+y,0);
+  const mrows=Object.keys(MOTIFS).map(k=>({l:MOTIFS[k], v:st.motifs[k]||0})).sort((x,y)=>y.v-x.v); if(st.motifs.nr) mrows.push({l:"Non renseigné", v:st.motifs.nr, c:"var(--line)"});
+  $("motifs").innerHTML = nRef ? barRows(mrows, nRef, "var(--warn)") : '<p class="muted" style="margin:0">Aucun refus enregistré sur cette période.</p>';
+  // créneaux
+  const ap=evs.filter(e=>e.kind==="appel");
+  const JOURS=["Dim.","Lun.","Mar.","Mer.","Jeu.","Ven.","Sam."], byD={}, byH={};
+  ap.forEach(e=>{ const d=new Date(e.t), wd=d.getDay(), h=d.getHours(); byD[wd]=byD[wd]||{n:0,r:0}; byD[wd].n++; if(e.issue==="rdv") byD[wd].r++; byH[h]=byH[h]||{n:0,r:0}; byH[h].n++; if(e.issue==="rdv") byH[h].r++; });
+  const dKeys=[1,2,3,4,5,6].concat(byD[0]?[0]:[]);
+  const hs=Object.keys(byH).map(Number), hMin=Math.min(8,...hs), hMax=Math.max(18,...hs), hKeys=[]; for(let h=hMin;h<=hMax;h++) hKeys.push(h);
+  const row=(l,o)=>({l, v:o?o.r:0, sub:o&&o.n?pct(o.r,o.n)+" de "+o.n+" abordés":"–"});
+  $("byDay").innerHTML = ap.length ? barRows(dKeys.map(k=>row(JOURS[k],byD[k])),0,"var(--accent)") : '<p class="muted" style="margin:0">Les jours apparaîtront avec les premières saisies.</p>';
+  $("byHour").innerHTML = ap.length ? barRows(hKeys.map(h=>row(h+"h – "+(h+1)+"h",byH[h])),0,"var(--accent)") : '<p class="muted" style="margin:0">Les créneaux apparaîtront avec les premières saisies.</p>';
+  // graphique mensuel (tout le POC)
+  const all=allEvents(), ms=monthList();
+  const data=ms.map(m=>{ const s=stats(all.filter(e=>mkey(e.date)===m)); return {m, mes:s.mes.rdv, gc:s.gc.rdv, v:s.ventes}; });
+  const mo=monthObj(), tg=monthTargets(); const max=Math.max(mo*1.15, ...data.map(d=>Math.max(d.mes+d.gc,d.v)), 1);
+  const W=Math.max(360, ms.length*100), H=230, L=34, B=28, T=16, cw=(W-L-8)/ms.length, bw=Math.min(34,cw*.32), gap=4;
+  const y=v=>T+(H-T-B)*(1-v/max);
+  const step = max>60?20:max>30?10:5; let grid="";
+  for(let v=0; v<=max; v+=step) grid+='<line x1="'+L+'" x2="'+(W-8)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)"/><text x="'+(L-6)+'" y="'+(y(v)+4)+'" text-anchor="end">'+v+'</text>';
+  let bars="", obj="";
+  data.forEach((d,i)=>{ const x=L+cw*i+(cw-2*bw-gap)/2, x2=x+bw+gap; const yM=y(d.mes), yG=y(d.mes+d.gc), yV=y(d.v);
+    bars+='<rect x="'+x+'" y="'+yM+'" width="'+bw+'" height="'+(y(0)-yM)+'" fill="var(--mes)" rx="3"/>';
+    bars+='<rect x="'+x+'" y="'+yG+'" width="'+bw+'" height="'+(yM-yG)+'" fill="var(--gc)" rx="3"/>';
+    bars+='<rect x="'+x2+'" y="'+yV+'" width="'+bw+'" height="'+(y(0)-yV)+'" fill="var(--sale)" rx="3"/>';
+    if(d.mes+d.gc) bars+='<text class="lab" x="'+(x+bw/2)+'" y="'+(yG-5)+'" text-anchor="middle">'+(d.mes+d.gc)+'</text>';
+    if(d.v) bars+='<text class="lab" x="'+(x2+bw/2)+'" y="'+(yV-5)+'" text-anchor="middle">'+d.v+'</text>';
+    const [yy,mm]=d.m.split("-"); bars+='<text x="'+(x+bw+gap/2)+'" y="'+(H-8)+'" text-anchor="middle">'+MOIS[+mm-1]+' '+yy.slice(2)+'</text>';
+    const t=tg[d.m]; if(t) obj+='<line x1="'+(x-5)+'" x2="'+(x+bw+5)+'" y1="'+y(t)+'" y2="'+y(t)+'" stroke="var(--ink)" stroke-opacity=".6" stroke-width="2" stroke-dasharray="4 3"/>'; });
+  $("monthChart").innerHTML='<div class="tblwrap"><svg class="chart" viewBox="0 0 '+W+' '+H+'" style="min-width:'+Math.min(W,520)+'px">'+grid+bars+obj+'</svg></div>';
+  $("ccType").innerHTML = CCS.map(cc=>{ const s=stats(evs.filter(e=>e.cc===cc)); return '<tr><td class="who">'+esc(name(cc))+'</td><td class="num">'+pct(s.abordes,s.calls)+'</td><td class="num"><b>'+fmt(s.mes.rdv)+'</b></td><td class="num">'+pct(s.mes.rdv,s.mes.calls)+'</td><td class="num">'+fmt(s.mes.ventes)+'</td><td class="num"><b>'+fmt(s.gc.rdv)+'</b></td><td class="num">'+pct(s.gc.rdv,s.gc.calls)+'</td><td class="num">'+fmt(s.gc.ventes)+'</td><td class="num">'+fmt(s.annules)+'</td></tr>'; }).join("");
+}
+
+function renderBilan(){
+  const all=allEvents(), tg=monthTargets(), tgV=monthTargets(OV()), months=monthList(), cur=mkey(today());
+  $("exportBtn").hidden=!isAdmin();
+  const line=(lab,s,o,oV,mf,bold)=>'<tr'+(bold?' style="font-weight:700"':'')+'><td class="who">'+lab+'</td><td class="num">'+fmt(s.calls)+'</td><td class="num">'+fmt(s.abordes)+'</td><td class="num">'+fmt(s.props)+'</td><td class="num">'+fmt(s.mes.rdv)+'</td><td class="num">'+fmt(s.gc.rdv)+'</td><td class="num"><b>'+fmt(s.rdv)+'</b></td><td class="num">'+(o?fmtObj(Math.round(o*10)/10):'–')+'</td><td class="barcell">'+atteinte(s.rdv,o,mf)+'</td><td class="num">'+fmt(s.annules)+'</td><td class="num"><b>'+fmt(s.ventes)+'</b></td><td class="num">'+(oV?fmtObj(Math.round(oV*10)/10):'–')+'</td><td class="barcell">'+atteinte(s.ventes,oV,mf,'var(--sale)')+'</td><td class="num">'+pct(s.rdv,s.calls)+'</td><td class="num">'+pct(s.ventes,s.rdv)+'</td></tr>';
+  let rows=months.map(m=>line(mlabel(m)+(m===cur?' <span class="pill neutral" style="font-size:11px;padding:1px 7px">en cours</span>':''), stats(all.filter(e=>mkey(e.date)===m)), tg[m]||0, tgV[m]||0, m===cur?monthFrac():null)).join("");
+  rows+=line("Total POC", stats(all), S.cfg.objectif, OV(), null, true);
+  $("bilanBody").innerHTML=rows;
+  if(!S.bilanM || !months.includes(S.bilanM)) S.bilanM = months.includes(cur) ? cur : months[0];
+  $("bilanSeg").innerHTML = months.map(m=>{ const [y,mm]=m.split("-"); return '<button data-bm="'+m+'" aria-pressed="'+(m===S.bilanM)+'">'+MOIS[+mm-1]+' '+y.slice(2)+'</button>'; }).join("");
+  $("bilanMonthTitle").textContent=mlabel(S.bilanM);
+  const mev=all.filter(e=>mkey(e.date)===S.bilanM), io=(tg[S.bilanM]||0)/CCS.length, iv=(tgV[S.bilanM]||0)/CCS.length;
+  $("bilanCC").innerHTML = CCS.map(cc=>{ const s=stats(mev.filter(e=>e.cc===cc)); return '<tr><td class="who">'+esc(name(cc))+'</td><td class="num">'+fmt(s.calls)+'</td><td class="num">'+fmt(s.abordes)+'</td><td class="num">'+fmt(s.props)+'</td><td class="num"><b>'+fmt(s.rdv)+'</b></td><td class="num">'+(io?fmt(io,2):'–')+'</td><td class="barcell">'+atteinte(s.rdv,io,null)+'</td><td class="num">'+fmt(s.annules)+'</td><td class="num"><b>'+fmt(s.ventes)+'</b></td><td class="num">'+(iv?fmt(iv,2):'–')+'</td><td class="barcell">'+atteinte(s.ventes,iv,null,'var(--sale)')+'</td><td class="num">'+fmt(s.mes.rdv)+' / '+fmt(s.gc.rdv)+'</td></tr>'; }).join("");
+  const mine=all.filter(e=>e.cc===S.cc);
+  $("myMonths").innerHTML = !S.cc ? '<tr><td colspan="10" class="muted">Choisissez votre nom pour voir votre bilan.</td></tr>' : months.map(m=>{ const s=stats(mine.filter(e=>mkey(e.date)===m)), o=(tg[m]||0)/CCS.length, oV=(tgV[m]||0)/CCS.length, mf=m===cur?monthFrac():null;
+    return '<tr><td class="who">'+mlabel(m)+'</td><td class="num">'+fmt(s.calls)+'</td><td class="num">'+fmt(s.props)+'</td><td class="num"><b>'+fmt(s.rdv)+'</b></td><td class="num">'+(o?fmt(o,2):'–')+'</td><td class="barcell">'+atteinte(s.rdv,o,mf)+'</td><td class="num"><b>'+fmt(s.ventes)+'</b></td><td class="num">'+(oV?fmt(oV,2):'–')+'</td><td class="barcell">'+atteinte(s.ventes,oV,mf,'var(--sale)')+'</td><td class="num">'+pct(s.rdv,s.calls)+'</td></tr>'; }).join("");
+}
+function bilanTSV(){
+  const all=allEvents(), tg=monthTargets(), tgV=monthTargets(OV()), months=monthList();
+  const r=(a,b)=>b?Math.round(100*a/b):"";
+  const H=["Appels passés","Appels abordés","Propositions","RDV Mise en service","RDV Gestion courante","RDV total","Objectif RDV","Atteinte RDV %","RDV annulés","Installations vendues","Objectif installations","Atteinte installations %","RDV/appels %","Ventes/RDV %"];
+  const row=(lab,s,o,oV)=>[lab,s.calls,s.abordes,s.props,s.mes.rdv,s.gc.rdv,s.rdv,o?fmt(o,1):"",r(s.rdv,o),s.annules,s.ventes,oV?fmt(oV,1):"",r(s.ventes,oV),r(s.rdv,s.calls),r(s.ventes,s.rdv)];
+  const L=[["Mois"].concat(H)];
+  months.forEach(m=>L.push(row(mlabel(m), stats(all.filter(e=>mkey(e.date)===m)), tg[m]||0, tgV[m]||0)));
+  L.push(row("Total POC", stats(all), S.cfg.objectif, OV()));
+  const st=stats(all); L.push([]); L.push(["Motif de refus","Nombre"]); Object.keys(MOTIFS).forEach(k=>L.push([MOTIFS[k], st.motifs[k]||0])); if(st.motifs.nr) L.push(["Non renseigné", st.motifs.nr]);
+  if(!isAdmin()) return L.map(x=>x.join("\t")).join("\n");
+  L.push([]); L.push(["Conseiller · "+mlabel(S.bilanM)].concat(H));
+  const mev=all.filter(e=>mkey(e.date)===S.bilanM), io=(tg[S.bilanM]||0)/CCS.length, iv=(tgV[S.bilanM]||0)/CCS.length;
+  CCS.forEach(cc=>L.push(row(name(cc), stats(mev.filter(e=>e.cc===cc)), io, iv)));
+  return L.map(x=>x.join("\t")).join("\n");
+}
+$("copyBilan").addEventListener("click", async e=>{ e.stopPropagation(); const txt=bilanTSV();
+  try{ await navigator.clipboard.writeText(txt); toast("Tableau copié : collez-le dans Excel ou PowerPoint.", null); }
+  catch(err){ toast("Copie bloquée par le navigateur. Sélectionnez le tableau à la main.", null); } });
+
+function exportCSV(){
+  const q=v=>{ v=v==null?"":String(v); return /[";\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; };
+  const L=[["Date","Heure","Conseiller","Type d'appel","Résultat","Motif de refus","Statut du RDV","Date de vente"]];
+  const evs=allEvents(), ap=evs.filter(e=>e.kind==="appel").sort((a,b)=>a.t-b.t);
+  ap.forEach(e=>{ const d=new Date(e.t); L.push([e.date.split("-").reverse().join("/"), pad(d.getHours())+":"+pad(d.getMinutes()), name(e.cc), TYPE[e.type]||"", OUT[e.issue]||"", e.motif?MOTIFS[e.motif]:"", e.issue==="rdv"?(e.vente?"Installation vendue":e.annule?"RDV annulé":"En attente"):"", e.vente&&e.venteDate?e.venteDate.split("-").reverse().join("/"):""]); });
+  L.push([]); L.push(["Date","Conseiller","Appels passés (saisis)","Appels abordés"]);
+  evs.filter(e=>e.kind==="jour").sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).forEach(e=>L.push([e.date.split("-").reverse().join("/"), name(e.cc), e.total!=null?e.total:"non renseigné", e.logged]));
+  return "﻿"+L.map(r=>r.map(q).join(";")).join("\r\n");
+}
+$("exportBtn").addEventListener("click", async e=>{ e.stopPropagation(); if(!isAdmin()) return; const csv=exportCSV();
+  try{ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}), a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="POC-Homiris-saisies-"+today()+".csv"; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1500); return; }catch(err){}
+  try{ await navigator.clipboard.writeText(csv.replace(/^﻿/,"").replace(/;/g,"\t")); toast("Saisies copiées : collez-les dans Excel.", null); }
+  catch(err){ toast("Export impossible depuis ce navigateur.", null); } });
+
+/* ---------- challenge ---------- */
+const CH = () => { const c=S.cfg.challenge; return c && Array.isArray(c.weeks) && c.weeks.length ? c : CH_DEF; };
+const addDays = (s,n) => { const d=parseD(s); d.setDate(d.getDate()+n); return dstr(d); };
+const dShort = s => { const d=parseD(s); return d.getDate()+" "+MOIS[d.getMonth()]; };
+const dot = s => /\.$/.test(s) ? s : s+".";
+const euro = v => fmt(v, Number.isInteger(v)?0:2)+" €";
+function weekRdv(w){ const end=addDays(w.start,6); let n=0; for(const e of allEvents()) if(e.kind==="appel" && e.issue==="rdv" && !e.annule && e.date>=w.start && e.date<=end) n++; return n; }
+function renderChallenge(){
+  const ch=CH(), td=today(); let total=0, allSeuil=true, finished=true, max=0;
+  const cards=ch.weeks.map((w,i)=>{ const end=addDays(w.start,6), fri=addDays(w.start,4), n=weekRdv(w);
+    const state = td<w.start ? "avenir" : td>end ? "fini" : "encours";
+    const gain = n>=w.seuil ? w.mSeuil : n>=w.palier ? w.mPalier : 0;
+    if(state!=="avenir") total+=gain; if(n<w.seuil) allSeuil=false; if(state!=="fini") finished=false; max+=w.mSeuil;
+    const top=Math.max(w.seuil*1.2, n, 1), pc=v=>Math.min(100,100*v/top);
+    let pill, hint;
+    if(state==="avenir"){ pill='<span class="pill neutral">À venir</span>'; hint=dot("Démarre le lundi "+dShort(w.start)); }
+    else if(n>=w.seuil){ pill='<span class="pill good">✓ Seuil atteint · '+euro(w.mSeuil)+'</span>'; hint = state==="encours" ? "Somme complète assurée. Chaque RDV en plus prépare la semaine suivante." : "Somme complète gagnée."; }
+    else if(state==="encours"){ pill = n>=w.palier ? '<span class="pill warn">Palier atteint · '+euro(w.mPalier)+'</span>' : '<span class="pill neutral">En cours</span>';
+      hint = (n<w.palier ? "Encore "+(w.palier-n)+" RDV pour le palier ("+euro(w.mPalier)+"), " : "")+dot("encore "+(w.seuil-n)+" RDV pour le seuil ("+euro(w.mSeuil)+"), jusqu'au vendredi "+dShort(fri)); hint=hint.charAt(0).toUpperCase()+hint.slice(1); }
+    else { pill = n>=w.palier ? '<span class="pill warn">Palier · '+euro(w.mPalier)+'</span>' : '<span class="pill bad">Non atteint</span>'; hint = n>=w.palier ? "Palier gagné, seuil manqué de "+(w.seuil-n)+" RDV." : "Ni palier ni seuil cette semaine."; }
+    return '<div class="card chw chw-'+state+'"><div class="rowhead"><div><div class="eyebrow">Semaine '+(i+1)+(state==="encours"?' · en cours':'')+'</div><div class="muted" style="font-size:13px">du '+dShort(w.start)+' au '+dShort(fri)+'</div></div>'+pill+'</div>'+
+      '<div class="chw-num"><b>'+fmt(n)+'</b> <span class="muted">/ '+w.seuil+' RDV</span></div>'+
+      '<div class="gauge"><i style="width:'+pc(n)+'%;background:'+(n>=w.seuil?'var(--good)':'var(--accent)')+'"></i>'+
+        '<span class="mark" style="left:'+pc(w.palier)+'%"><em>Palier '+w.palier+' · '+euro(w.mPalier)+'</em></span>'+
+        '<span class="mark seuil" style="left:'+pc(w.seuil)+'%"><em>Seuil '+w.seuil+' · '+euro(w.mSeuil)+'</em></span></div>'+
+      '<p class="chw-hint">'+hint+'</p></div>'; });
+  max+=ch.bonus||0;
+  const bonusWon = finished && allSeuil && ch.weeks.length;
+  if(bonusWon) total+=ch.bonus||0;
+  $("chWeeks").innerHTML=cards.join("");
+  $("chTotal").textContent=fmt(total, Number.isInteger(total)?0:2); $("chPart").textContent=euro(Math.round(total/CCS.length*100)/100);
+  $("chMax").textContent="Cagnotte maximale possible : "+euro(max)+" ("+euro(Math.round(max/CCS.length*100)/100)+" par conseiller)";
+  const first=ch.weeks[0], last=ch.weeks[ch.weeks.length-1];
+  $("chDates").textContent="Du lundi "+dShort(first.start)+" au vendredi "+dShort(addDays(last.start,4))+" "+parseD(last.start).getFullYear()+".";
+  const stillOn = ch.weeks.every(w=>{ const end=addDays(w.start,6); return td<=end || weekRdv(w)>=w.seuil; });
+  $("chBonus").innerHTML='<div class="rowhead"><div><div class="eyebrow">Bonus de série</div><div style="font-size:15px;margin-top:4px">'+euro(ch.bonus||0)+' en plus si le seuil est atteint les '+ch.weeks.length+' semaines.</div></div>'+
+    (bonusWon ? '<span class="pill good">✓ Bonus gagné</span>' : stillOn ? '<span class="pill neutral">Toujours en jeu</span>' : '<span class="pill bad">Perdu cette fois</span>')+'</div>';
+}
+
+function renderReglages(){
+  const f=$("namesForm");
+  if(!f.children.length) f.innerHTML = CCS.map((cc,i)=>'<div class="field"><label for="nm-'+cc+'">Conseiller '+(i+1)+'</label><input id="nm-'+cc+'" data-i="'+i+'" maxlength="40"></div>').join("");
+  CCS.forEach((cc,i)=>{ const el=$("nm-"+cc); if(document.activeElement!==el) el.value=S.cfg.names[i]||""; });
+  [["cfgStart","start"],["cfgDur","duree"],["cfgObj","objectif"],["cfgObjV","objVentes"]].forEach(([id,k])=>{ if(document.activeElement!==$(id)) $(id).value=S.cfg[k]; });
+  const tg=monthTargets(), tgV=monthTargets(OV());
+  $("cfgSum").innerHTML = "Fin prévue le "+nice(dstr(endDate()))+".<br>RDV : "+fmt(monthObj(),1)+" / mois pour l'équipe, "+fmt(indObj(),2)+" / mois / conseiller. Installations : "+fmt(monthObj(OV()),1)+" / mois pour l'équipe, "+fmt(indObj(OV()),2)+" / mois / conseiller.<br>Objectifs par mois : "+pocMonths().map(m=>mlabel(m)+" "+fmt(tg[m],1)+" RDV, "+fmt(tgV[m],1)+" inst.").join(" · ")+".";
+  const ch=CH();
+  if(!$("chCfg").children.length || $("chCfg").children.length!==ch.weeks.length) $("chCfg").innerHTML=ch.weeks.map((w,i)=>'<tr><td class="who">Semaine '+(i+1)+'</td>'+
+    [["start","date"],["palier","number"],["mPalier","number"],["seuil","number"],["mSeuil","number"]].map(([k,t])=>'<td'+(t==="number"?' class="num"':'')+'><input class="chin" type="'+t+'" id="ch-'+i+'-'+k+'" data-chw="'+i+'" data-chk="'+k+'" min="0"></td>').join("")+'</tr>').join("");
+  ch.weeks.forEach((w,i)=>["start","palier","mPalier","seuil","mSeuil"].forEach(k=>{ const el=$("ch-"+i+"-"+k); if(document.activeElement!==el) el.value=w[k]; }));
+  if(document.activeElement!==$("chBonusIn")) $("chBonusIn").value=ch.bonus||0;
+  resetUI(); renderSauvegardes();
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------- écriture et sauvegarde ---------- */
+const queues=new Map();
+function queued(key, fn){ const p=(queues.get(key)||Promise.resolve()).then(fn,fn); queues.set(key,p.catch(()=>{})); return p; }
+
+/* File d'envoi : chaque saisie est d'abord gardée sur le poste (localStorage), puis envoyée.
+   En cas de coupure, elle reste en attente et repart toute seule ; rien n'est perdu si l'onglet se ferme. */
+let OUTBOX=[]; try{ OUTBOX=JSON.parse(lsx.get("poc_outbox")||"[]").map(o=>({...o, sending:false})); }catch(e){ OUTBOX=[]; }
+const saveOutbox=()=>lsx.set("poc_outbox", JSON.stringify(OUTBOX.map(({sending,...o})=>o)));
+let flushing=false, retryTimer=null, lastSaved=0, lastErr=null;
+function enqueue(op){
+  const ex=OUTBOX.find(o=>!o.sending && o.col===op.col && o.id===op.id);
+  if(ex){ if(op.mode==="set"){ ex.mode="set"; ex.data=op.data; } else ex.data={...ex.data, ...op.data}; }
+  else OUTBOX.push({col:op.col, id:op.id, mode:op.mode, data:op.data, n:0});
+  saveOutbox(); rebuild(); flush(); }
+async function flush(){ if(flushing||!S.db) return; flushing=true; syncUI();
+  while(OUTBOX.length){ const op=OUTBOX[0]; op.sending=true;
+    try{ const ref=S.db.collection(op.col).doc(op.id); if(op.mode==="set") await ref.set(op.data); else await ref.update(op.data);
+      OUTBOX.shift(); lastSaved=Date.now(); lastErr=null; saveOutbox(); }
+    catch(e){ op.sending=false; const c=e&&e.code;
+      if((c==="not-found"||c==="invalid_argument") && op.mode!=="set" && S.appels.get(op.id)){ const {id,...full}=S.appels.get(op.id); op.mode="set"; op.data=full; continue; }
+      if(["permission-denied","invalid-argument","permission_denied","invalid_argument"].includes(c)){
+        try{ const rej=JSON.parse(lsx.get("poc_rejected")||"[]"); rej.push({...op, err:c, at:Date.now()}); lsx.set("poc_rejected", JSON.stringify(rej.slice(-500))); }catch(x){}
+        OUTBOX.shift(); saveOutbox(); errToast(e); continue; }
+      lastErr=e; op.n=(op.n||0)+1; break; } }
+  flushing=false; syncUI(); scheduleRebuild();
+  clearTimeout(retryTimer); if(OUTBOX.length) retryTimer=setTimeout(flush, 10000); }
+window.addEventListener("online", ()=>flush());
+function syncUI(){ const el=$("sync"); if(!S.db){ el.hidden=true; return; } el.hidden=false; const n=OUTBOX.length;
+  if(n && lastErr){ el.className="sync warn"; el.textContent="⚠ "+n+" saisie"+(n>1?"s":"")+" en attente · nouvel essai automatique"; }
+  else if(n){ el.className="sync busy"; el.textContent="Enregistrement…"; }
+  else { el.className="sync ok"; el.textContent = lastSaved ? "✓ Enregistré" : "✓ À jour"; } }
+
+/* Données reçues + saisies encore en attente = ce que l'écran affiche */
+const SRV={appels:new Map(), jours:new Map()}, SUBS=new Map(), SLICE=new Map(), LOADED=new Set();
+let rbTimer=null; function scheduleRebuild(){ if(rbTimer) return; rbTimer=setTimeout(()=>{ rbTimer=null; rebuild(); }, 30); }
+function rebuild(){ if(rbTimer){ clearTimeout(rbTimer); rbTimer=null; } S.appels=new Map(SRV.appels); S.jours=new Map(SRV.jours);
+  for(const op of OUTBOX){ const m=op.col==="appels"?S.appels:S.jours, prev=m.get(op.id);
+    if(op.mode==="set") m.set(op.id, {...op.data, id:op.id}); else if(prev) m.set(op.id, {...prev, ...op.data, id:op.id}); }
+  backupLocal(); render(); }
+function watchMonths(){ const ms=pocMonths(), cur=mkey(today()); let a=[ms[0]||cur, cur].sort()[0], b=[ms[ms.length-1]||cur, cur].sort()[1];
+  const out=[]; let [y,m]=a.split("-").map(Number); while(true){ const k=y+"-"+pad(m); out.push(k); if(k>=b||out.length>24) break; m++; if(m>12){m=1;y++;} } return out; }
+function subscribe(){ if(!S.db) return; const want=new Set();
+  watchMonths().forEach(m=>{ CCS.forEach(cc=>want.add("appels|"+m+"|"+cc)); want.add("jours|"+m+"|"); });
+  for(const [k,un] of SUBS) if(!want.has(k)){ un(); SUBS.delete(k); const [col]=k.split("|"); (SLICE.get(k)||new Set()).forEach(id=>SRV[col].delete(id)); SLICE.delete(k); LOADED.delete(k); }
+  for(const k of want) if(!SUBS.has(k)){ const [col,m,cc]=k.split("|"); let q=S.db.collection(col).where("mois","==",m); if(cc) q=q.where("cc","==",cc);
+    SUBS.set(k, q.limit(1000).onSnapshot(snap=>{ const store=SRV[col], ids=new Set();
+      (SLICE.get(k)||new Set()).forEach(id=>store.delete(id));
+      snap.docs.forEach(d=>{ const v=d.data(); if(v){ store.set(d.id,{...v, id:d.id}); ids.add(d.id); } });
+      SLICE.set(k,ids); LOADED.add(k); scheduleRebuild(); }, ()=>{ $("offline").hidden=false; })); } }
+
+/* Copie de secours sur ce poste, mise à jour après chaque changement reçu ou saisi */
+let bkTimer=null; S.bkWarn=false;
+function readBackup(){ try{ return JSON.parse(lsx.get("poc_backup")||"null"); }catch(e){ return null; } }
+function backupLocal(){ clearTimeout(bkTimer); bkTimer=setTimeout(()=>{
+  if(!S.db || !SUBS.size || LOADED.size<SUBS.size) return;
+  const old=readBackup()||{appels:[],jours:[]}, A=new Map((old.appels||[]).map(r=>[r.id,r])), J=new Map((old.jours||[]).map(r=>[r.id,r]));
+  // La copie ne fait que s'enrichir : une fiche disparue de la base reste dans la copie et peut être restaurée.
+  for(const r of SRV.appels.values()) A.set(r.id, r); for(const r of SRV.jours.values()) J.set(r.id, r);
+  const miss=[...A.keys()].filter(id=>!SRV.appels.has(id)).length + [...J.keys()].filter(id=>!SRV.jours.has(id)).length;
+  S.bkWarn = miss>=3;
+  if(A.size||J.size) lsx.set("poc_backup", JSON.stringify({t:Date.now(), appels:[...A.values()], jours:[...J.values()]}));
+  renderSauvegardes(); renderLocks(); }, 800); }
+function missingFromBackup(){ const b=readBackup(); if(!b) return [];
+  return [...(b.appels||[]).filter(r=>!SRV.appels.has(r.id)).map(r=>({col:"appels",r})), ...(b.jours||[]).filter(r=>!SRV.jours.has(r.id)).map(r=>({col:"jours",r}))]; }
+
+/* Actions */
+const newDay = (cc,date) => ({cc, date, mois:mkey(date)});
+function addEvent(type, issue){
+  if(!S.db||!canUse(S.cc)) return; const date=today(), cc=S.cc, t=Date.now(), id=cc+"_"+t;
+  enqueue({col:"appels", id, mode:"set", data:{...newDay(cc,date), t, type, issue}});
+  S.lastRefus = issue==="refus" ? {cc,date,t} : null; render();
+  toast((issue==="rdv"?"RDV pris":OUT[issue])+" · "+TYPE[type]+" · enregistré", ()=>removeEvent(cc,date,t,true));
+}
+function patchEvent(cc,t,patch){ if(!S.db||!canUse(cc)) return; enqueue({col:"appels", id:cc+"_"+t, mode:"merge", data:patch}); }
+function removeEvent(cc,date,t,silent){ if(!canUse(cc)) return; if(S.lastRefus&&S.lastRefus.t===t) S.lastRefus=null;
+  patchEvent(cc,t,{supprime:true, supprimeT:Date.now()});
+  if(!silent) toast("Saisie mise à la corbeille", ()=>patchEvent(cc,t,{supprime:false, supprimeT:null})); }
+function setVente(cc,date,t,on){
+  patchEvent(cc,t, on ? {vente:true, venteDate:today(), venteT:Date.now(), annule:false, annuleDate:null} : {vente:false, venteDate:null, venteT:null});
+  if(on) toast("Installation vendue enregistrée", ()=>setVente(cc,date,t,false)); }
+function setAnnule(cc,date,t,on){
+  patchEvent(cc,t, on ? {annule:true, annuleDate:today(), vente:false, venteDate:null, venteT:null} : {annule:false, annuleDate:null});
+  if(on) toast("RDV marqué annulé", ()=>setAnnule(cc,date,t,false)); }
+function setMotif(m){ const lr=S.lastRefus; if(!lr) return; const r=S.appels.get(lr.cc+"_"+lr.t); patchEvent(lr.cc, lr.t, {motif: r&&r.motif===m ? null : m}); }
+let totTimer=null;
+function setTotal(n){ if(!S.db||!canUse(S.cc)) return; const cc=S.cc, date=today(), id=cc+"_"+date;
+  n = n===""||n==null ? null : Math.max(0, Math.min(500, Math.round(+n)||0));
+  const body={...newDay(cc,date), total:n}; S.jours.set(id,{...body,id}); renderEspace();
+  clearTimeout(totTimer); totTimer=setTimeout(()=>enqueue({col:"jours", id, mode:"set", data:body}), 700); }
+
+/* RESET = archivage (réversible) */
+let resetArmed=false;
+const lastReset = () => { let rid=null, n=0; for(const r of S.appels.values()) if(r.archive && (!rid||r.archive>rid)) rid=r.archive; if(rid) for(const r of S.appels.values()) if(r.archive===rid) n++; return {rid,n}; };
+function resetUI(){ const n=allEvents().filter(e=>e.kind==="appel").length;
+  $("resetBtn").textContent = resetArmed ? "Confirmer : archiver "+n+" saisie"+(n>1?"s":"") : "RESET des données";
+  $("resetBtn").classList.toggle("arm", resetArmed); $("resetCancel").hidden=!resetArmed; $("resetBtn").disabled=!S.db;
+  if(!resetArmed) $("resetInfo").textContent = n ? n+" saisie"+(n>1?"s":"")+" en cours" : "Aucune saisie en cours"; }
+$("resetBtn").addEventListener("click", e=>{ e.stopPropagation(); if(!S.db||!isAdmin()) return;
+  if(!resetArmed){ resetArmed=true; $("resetInfo").textContent="Les saisies seront archivées, restaurables depuis « Sauvegardes »."; resetUI(); return; }
+  resetArmed=false; const rid="r"+Date.now(); let n=0;
+  for(const r of [...S.appels.values()]) if(live(r)){ enqueue({col:"appels", id:r.id, mode:"merge", data:{archive:rid}}); n++; }
+  for(const j of [...S.jours.values()]) if(live(j)){ const {id,...b}=j; enqueue({col:"jours", id, mode:"set", data:{...b, archive:rid}}); }
+  S.lastRefus=null; toast(n+" saisie"+(n>1?"s":"")+" archivée"+(n>1?"s":"")+" · remise à zéro effectuée", null); resetUI(); });
+$("resetCancel").addEventListener("click", e=>{ e.stopPropagation(); resetArmed=false; resetUI(); });
+function restoreReset(){ if(!isAdmin()) return; const {rid}=lastReset(); if(!rid) return; let n=0;
+  for(const r of [...S.appels.values()]) if(r.archive===rid){ enqueue({col:"appels", id:r.id, mode:"merge", data:{archive:null}}); n++; }
+  for(const j of [...S.jours.values()]) if(j.archive===rid){ const {id,...b}=j; enqueue({col:"jours", id, mode:"set", data:{...b, archive:null}}); }
+  toast(n+" saisie"+(n>1?"s":"")+" restaurée"+(n>1?"s":""), null); }
+async function restoreBackup(){ if(!isAdmin()||!S.db) return; const miss=missingFromBackup(); let n=0;
+  for(const {col,r} of miss){ const {id,...b}=r;
+    try{ const snap=await S.db.collection(col).doc(id).get(); if(snap.exists) continue; }catch(e){}
+    enqueue({col, id, mode:"set", data:b}); n++; }
+  toast(n+" fiche"+(n>1?"s":"")+" restaurée"+(n>1?"s":"")+" depuis la copie de ce poste", null); }
+function renderSauvegardes(){
+  const b=readBackup(), miss=b?missingFromBackup().length:0, lr=lastReset();
+  $("bkInfo").textContent = b ? "Copie de secours sur ce poste : mise à jour le "+new Date(b.t).toLocaleString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})+", "+fmt((b.appels||[]).length)+" saisie"+((b.appels||[]).length>1?"s":"")+"." : "Pas encore de copie de secours sur ce poste : elle se crée à la première saisie.";
+  $("bkRestore").hidden=!miss; $("bkRestore").textContent="Restaurer "+miss+" fiche"+(miss>1?"s":"")+" absente"+(miss>1?"s":"")+" de la base";
+  $("rsInfo").textContent = lr.rid ? "Dernier RESET : "+new Date(+lr.rid.slice(1)).toLocaleString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})+" · "+lr.n+" saisie"+(lr.n>1?"s":"")+" archivée"+(lr.n>1?"s":"")+"." : "Aucun RESET effectué.";
+  $("rsRestore").hidden=!lr.rid||!lr.n;
+  const trash=[...S.appels.values()].filter(r=>r.supprime && !r.archive).sort((a,b)=>(b.supprimeT||0)-(a.supprimeT||0)).slice(0,30);
+  $("trash").innerHTML = trash.length ? trash.map(r=>'<li><span class="when">'+whenLabel(r.t,r.date)+'</span><span class="tag '+r.type+'">'+(r.type==="mes"?"MES":"GC")+'</span><span class="res">'+esc(name(r.cc))+' · '+(OUT[r.issue]||"")+'</span><button class="del" data-untrash="'+esc(r.id)+'">Restaurer</button></li>').join("") : '<li class="muted">La corbeille est vide.</li>';
+  $("bkWarn").hidden = !(S.bkWarn && isAdmin()); }
+let cfgTimer=null;
+function saveCfg(){ render(); if(!S.db||!isAdmin()) return; clearTimeout(cfgTimer); cfgTimer=setTimeout(()=>queued("cfg",()=>S.db.doc("config/poc").set({...S.cfg})).catch(errToast),600); }
+function errToast(e){ const c=e&&e.code; toast(c==="permission-denied" ? "Enregistrement refusé : reconnectez-vous avec votre code." : c==="resource-exhausted" ? "Limite quotidienne de la base atteinte : prévenez le responsable du POC." : "Enregistrement impossible pour le moment. La saisie est gardée et repartira automatiquement.", null); }
+let tTimer=null, tUndo=null;
+function toast(msg, undo){ $("toastMsg").textContent=msg; tUndo=undo; $("toastUndo").hidden=!undo; $("toast").hidden=false; clearTimeout(tTimer); tTimer=setTimeout(()=>{$("toast").hidden=true; tUndo=null;}, 6000); }
+$("toastUndo").addEventListener("click",()=>{ if(tUndo) tUndo(); tUndo=null; $("toast").hidden=true; });
+$("bkRestore").addEventListener("click", e=>{ e.stopPropagation(); restoreBackup(); });
+$("rsRestore").addEventListener("click", e=>{ e.stopPropagation(); restoreReset(); });
+
+/* ---------- interactions ---------- */
+document.addEventListener("click", e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.login){ S.loginKey=t.dataset.login; $("loginErr").textContent=""; renderLogin(); setTimeout(()=>$("loginPin").focus(),0); return; }
+  if(t.dataset.tab||t.dataset.goto){ S.tab=t.dataset.tab||t.dataset.goto; ls.set("poc_tab",S.tab); render(); window.scrollTo(0,0); return; }
+  if(t.dataset.cc){ if(!isAdmin()) return; S.cc=t.dataset.cc; S.type=null; ls.set("poc_cc",S.cc); $("errCC").textContent=""; render(); if(!canUse(S.cc)) setTimeout(()=>$("pinCC").focus(),0); return; }
+  if(t.classList.contains("typebtn")){ S.type = S.type===t.dataset.t ? null : t.dataset.t; S.lastRefus=null; render(); return; }
+  if(t.dataset.dc){ const cur=+($("dayTotal").value||0); setTotal(Math.max(0,cur+(+t.dataset.dc))); return; }
+  if(t.dataset.motif){ setMotif(t.dataset.motif); return; }
+  if(t.dataset.annul){ setAnnule(S.cc, t.dataset.date, +t.dataset.annul, true); return; }
+  if(t.dataset.unannul){ setAnnule(S.cc, t.dataset.date, +t.dataset.unannul, false); return; }
+  if(t.dataset.untrash){ if(isAdmin()){ const rr=S.appels.get(t.dataset.untrash); if(rr) enqueue({col:"appels", id:rr.id, mode:"merge", data:{supprime:false, supprimeT:null}}); toast("Saisie restaurée", null); } return; }
+  if(t.classList.contains("outbtn")){ if(Date.now()<S.busyUntil) return; S.busyUntil=Date.now()+1200; if(S.type){ addEvent(S.type, t.dataset.o); S.type=null; render(); } return; }
+  if(t.closest("#perSeg")){ S.per=t.dataset.p; render(); return; }
+  if(t.dataset.bm){ S.bilanM=t.dataset.bm; render(); return; }
+  if(t.closest("#anaSeg")){ S.anaPer=t.dataset.p; render(); return; }
+  if(t.dataset.sale){ setVente(S.cc, t.dataset.date, +t.dataset.sale, true); return; }
+  if(t.dataset.unsale){ setVente(S.cc, t.dataset.date, +t.dataset.unsale, false); return; }
+  if(t.dataset.del){ if(t.classList.contains("arm")){ removeEvent(S.cc, t.dataset.date, +t.dataset.del); } else { t.classList.add("arm"); t.textContent="Confirmer"; setTimeout(()=>{ if(t.isConnected){ t.classList.remove("arm"); t.textContent="Supprimer"; } },3000); } return; }
+});
+document.addEventListener("input", e=>{
+  const el=e.target;
+  if(el.id==="dayTotal"){ el.value=el.value.replace(/\D/g,"").slice(0,3); setTotal(el.value); return; }
+  if(el.classList.contains("pin")){ el.value=el.value.replace(/\D/g,"").slice(0,6); return; }
+  if(!isAdmin()) return;
+  if(el.dataset.i!==undefined){ const n=[...S.cfg.names]; n[+el.dataset.i]=el.value; S.cfg.names=n; saveCfg(); }
+  else if(el.id==="cfgStart" && /^\d{4}-\d{2}-\d{2}$/.test(el.value)){ S.cfg.start=el.value; saveCfg(); }
+  else if(el.id==="cfgDur" && +el.value>0){ S.cfg.duree=+el.value; saveCfg(); }
+  else if(el.id==="cfgObj" && +el.value>0){ S.cfg.objectif=Math.round(+el.value); saveCfg(); }
+  else if(el.id==="cfgObjV" && +el.value>0){ S.cfg.objVentes=+el.value; saveCfg(); }
+  else if(el.dataset.chw!==undefined){ const ch=JSON.parse(JSON.stringify(CH())), w=ch.weeks[+el.dataset.chw], k=el.dataset.chk;
+    if(k==="start"){ if(!/^\d{4}-\d{2}-\d{2}$/.test(el.value)) return; w.start=el.value; } else { if(el.value===""||+el.value<0) return; w[k]=+el.value; }
+    S.cfg.challenge=ch; saveCfg(); }
+  else if(el.id==="chBonusIn" && el.value!=="" && +el.value>=0){ const ch=JSON.parse(JSON.stringify(CH())); ch.bonus=+el.value; S.cfg.challenge=ch; saveCfg(); }
+});
+
+render();
+
+/* ---------- Firebase ---------- */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC7jesOUeK-mXEfom1EooLVsLWtesDzgiQ",
+  authDomain: "poc-homiris.firebaseapp.com",
+  projectId: "poc-homiris",
+  storageBucket: "poc-homiris.firebasestorage.app",
+  messagingSenderId: "678960671690",
+  appId: "1:678960671690:web:9e5365da6ac062dff53d33"
+};
+let AUTH=null, FS=null;
+(function(){
+  renderLogin();
+  if(!window.firebase || !FIREBASE_CONFIG.apiKey){ $("loginErr").textContent="Le site n'est pas encore relié à la base."; return; }
+  firebase.initializeApp(FIREBASE_CONFIG); AUTH=firebase.auth(); FS=firebase.firestore();
+  let cfgKey="";
+  FS.doc("config/poc").onSnapshot(s=>{ S.cfgMissing=!s.exists; if(s.exists){ const d=s.data(); S.cfg={...DEF,...d, names:Array.isArray(d.names)?d.names:DEF.names}; lsx.set("poc_names", JSON.stringify(S.cfg.names)); }
+    const k=S.cfg.start+"|"+S.cfg.duree; if(k!==cfgKey){ cfgKey=k; if(S.db) subscribe(); } render(); renderLogin(); }, ()=>{});
+  AUTH.onAuthStateChanged(u=>{ S.user=u||null;
+    if(u){ S.db=FS; if(!isAdmin()) S.cc=meKey(); else if(S.cfgMissing) FS.doc("config/poc").set({...S.cfg}).catch(()=>{}); if(!ls.get("poc_tab")) S.tab=isAdmin()?"accueil":"espace"; subscribe(); rebuild(); flush(); }
+    else { for(const un of SUBS.values()) un(); SUBS.clear(); SLICE.clear(); LOADED.clear(); SRV.appels.clear(); SRV.jours.clear(); S.db=null; S.appels=new Map(); S.jours=new Map(); }
+    syncUI(); render(); renderLogin(); });
+})();
+})();
+</script>
+</body>
+</html>
