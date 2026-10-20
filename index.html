@@ -315,7 +315,7 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
         <div class="hero-facts">
           <div class="fact"><b id="paceExp">0</b><span>RDV attendus à date</span></div>
           <div class="fact"><b id="paceExpV">0</b><span>ventes attendues à date</span></div>
-          <div class="fact"><b id="totCalls">0</b><span>appels passés</span></div>
+          <div class="fact"><b id="totCalls">0</b><span>appels reçus</span></div>
           <div class="fact"><b id="convV">–</b><span>des RDV deviennent une vente</span></div>
         </div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap" id="paceTag"></div>
@@ -382,7 +382,7 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
 
     <div class="card entry" id="entryCard">
       <div class="daycount">
-        <div style="min-width:0"><label for="dayTotal"><b>Appels passés aujourd'hui</b></label><div class="day-hint" id="dayHint"></div></div>
+        <div style="min-width:0"><label for="dayTotal"><b>Appels reçus aujourd'hui</b></label><div class="day-hint" id="dayHint"></div></div>
         <div class="stepper"><button data-dc="-1" aria-label="Retirer un appel">−</button><input id="dayTotal" inputmode="numeric" autocomplete="off" placeholder="0"><button data-dc="1" aria-label="Ajouter un appel">+</button></div>
       </div>
       <h2>Enregistrer un appel où la télésurveillance a été abordée</h2>
@@ -422,7 +422,7 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
         <div class="seg" id="perSeg"><button data-p="jour" aria-pressed="false">Aujourd'hui</button><button data-p="mois" aria-pressed="true">Ce mois</button><button data-p="poc" aria-pressed="false">Tout le POC</button></div>
       </div>
       <div class="kpis">
-        <div class="kpi"><b id="kCalls">0</b><span>Appels passés</span></div>
+        <div class="kpi"><b id="kCalls">0</b><span>Appels reçus</span></div>
         <div class="kpi"><b id="kAbord">0</b><span>Abordés · <span id="kAbordP">des appels</span></span></div>
         <div class="kpi"><b id="kProps">0</b><span>Propositions de RDV</span></div>
         <div class="kpi hl"><b id="kRdv">0</b><span>RDV pris</span></div>
@@ -835,7 +835,7 @@ function renderAnalyse(){
     $("verdict").innerHTML = more+conv+sv; }
   // entonnoir
   $("funnel").innerHTML = barRows([
-    {l:"Appels passés", v:st.calls, sub:"", c:"var(--muted)"},
+    {l:"Appels reçus", v:st.calls, sub:"", c:"var(--muted)"},
     {l:"Télésurveillance abordée", v:st.abordes, sub:pct(st.abordes,st.calls)+" des appels", c:"var(--mes)"},
     {l:"RDV proposé", v:st.props, sub:pct(st.props,st.abordes)+" des abordés", c:"var(--gc)"},
     {l:"RDV pris", v:st.rdv, sub:pct(st.rdv,st.props)+" des propositions", c:"var(--accent)"},
@@ -894,7 +894,7 @@ function renderBilan(){
 function bilanTSV(){
   const all=allEvents(), tg=monthTargets(), tgV=monthTargets(OV()), months=monthList();
   const r=(a,b)=>b?Math.round(100*a/b):"";
-  const H=["Appels passés","Appels abordés","Propositions","RDV Mise en service","RDV Gestion courante","RDV total","Objectif RDV","Atteinte RDV %","RDV annulés","Installations vendues","Objectif installations","Atteinte installations %","RDV/appels %","Ventes/RDV %"];
+  const H=["Appels reçus","Appels abordés","Propositions","RDV Mise en service","RDV Gestion courante","RDV total","Objectif RDV","Atteinte RDV %","RDV annulés","Installations vendues","Objectif installations","Atteinte installations %","RDV/appels %","Ventes/RDV %"];
   const row=(lab,s,o,oV)=>[lab,s.calls,s.abordes,s.props,s.mes.rdv,s.gc.rdv,s.rdv,o?fmt(o,1):"",r(s.rdv,o),s.annules,s.ventes,oV?fmt(oV,1):"",r(s.ventes,oV),r(s.rdv,s.calls),r(s.ventes,s.rdv)];
   const L=[["Mois"].concat(H)];
   months.forEach(m=>L.push(row(mlabel(m), stats(all.filter(e=>mkey(e.date)===m)), tg[m]||0, tgV[m]||0)));
@@ -921,7 +921,7 @@ function buildRecap(offset){
   L.push("POC Homiris · semaine du "+dShort(ws)+" au "+dShort(we)+" "+parseD(we).getFullYear());
   if(we<S.cfg.start){ L.push(""); L.push("Le POC démarre le "+nice(S.cfg.start)+" : pas encore de chiffres."); return L.join("\n"); }
   h("Équipe sur la semaine (écart avec la semaine précédente)");
-  L.push("Appels passés : "+sw.calls+d(sw.calls,sp.calls));
+  L.push("Appels reçus : "+sw.calls+d(sw.calls,sp.calls));
   L.push("Appels où la télésurveillance a été abordée : "+sw.abordes+d(sw.abordes,sp.abordes)+" · "+pct(sw.abordes,sw.calls)+" des appels");
   L.push("Propositions de RDV : "+sw.props+d(sw.props,sp.props));
   L.push("RDV pris : "+sw.rdv+d(sw.rdv,sp.rdv)+" · dont Mise en service "+sw.mes.rdv+", Gestion courante "+sw.gc.rdv);
@@ -985,7 +985,7 @@ function exportCSV(){
   const L=[["Date","Heure","Conseiller","Type d'appel","Résultat","Motif de refus","Statut du RDV","Date de vente"]];
   const evs=allEvents(), ap=evs.filter(e=>e.kind==="appel").sort((a,b)=>a.t-b.t);
   ap.forEach(e=>{ const d=new Date(e.t); L.push([e.date.split("-").reverse().join("/"), pad(d.getHours())+":"+pad(d.getMinutes()), name(e.cc), TYPE[e.type]||"", OUT[e.issue]||"", e.motif?MOTIFS[e.motif]:"", e.issue==="rdv"?(e.vente?"Installation vendue":e.annule?"RDV annulé":"En attente"):"", e.vente&&e.venteDate?e.venteDate.split("-").reverse().join("/"):""]); });
-  L.push([]); L.push(["Date","Conseiller","Appels passés (saisis)","Appels abordés"]);
+  L.push([]); L.push(["Date","Conseiller","Appels reçus (saisis)","Appels abordés"]);
   evs.filter(e=>e.kind==="jour").sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).forEach(e=>L.push([e.date.split("-").reverse().join("/"), name(e.cc), e.total!=null?e.total:"non renseigné", e.logged]));
   return "﻿"+L.map(r=>r.map(q).join(";")).join("\r\n");
 }
