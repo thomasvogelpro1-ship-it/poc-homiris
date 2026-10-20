@@ -183,13 +183,19 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
 .chw-encours{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .chw-avenir{opacity:.75}
 .chw-num b{font-family:var(--f-display);font-size:40px;font-weight:800;line-height:1}
-.gauge{position:relative;height:16px;background:var(--sunk);border-radius:99px;margin:4px 0 30px}
+.gauge{position:relative;height:16px;background:var(--sunk);border-radius:99px;margin:4px 0 4px}
 .gauge i{display:block;height:100%;border-radius:99px}
 .gauge .mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.5}
 .gauge .mark.seuil{opacity:.85;width:3px}
 .gauge .mark em{position:absolute;top:26px;transform:translateX(-50%);font-style:normal;font-size:11px;white-space:nowrap;color:var(--muted)}
 .gauge .mark.seuil em{transform:translateX(-85%);color:var(--ink);font-weight:700}
-.chw-hint{margin:0;font-size:14px}
+.chw-hint{margin:0;font-size:14px;flex:1 1 140px;min-width:0}
+.chw-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.chw-gains{display:grid;gap:6px;margin-left:auto;min-width:150px}
+.chw-gains .g{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 10px;border-radius:8px;background:var(--sunk);font-size:13px;color:var(--muted)}
+.chw-gains .g b{font-family:var(--f-display);font-size:18px;font-weight:800;color:var(--ink)}
+.chw-gains .g.seuil{background:var(--accent-soft)} .chw-gains .g.seuil b{color:var(--accent-ink)}
+.chw-gains .g.ok{background:var(--good-soft)} .chw-gains .g.ok b{color:var(--good)}
 .ch-rules{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px}
 .ch-cfg input{width:100%;min-width:70px;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 8px}
 .login{position:fixed;inset:0;z-index:100;background:var(--bg);overflow:auto;display:grid;place-items:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px}
@@ -1017,9 +1023,13 @@ function renderChallenge(){
     return '<div class="card chw chw-'+state+'"><div class="rowhead"><div><div class="eyebrow">Semaine '+(i+1)+(state==="encours"?' · en cours':'')+'</div><div class="muted" style="font-size:13px">du '+dShort(w.start)+' au '+dShort(fri)+'</div></div>'+pill+'</div>'+
       '<div class="chw-num"><b>'+fmt(n)+'</b> <span class="muted">/ '+w.seuil+' RDV</span></div>'+
       '<div class="gauge"><i style="width:'+pc(n)+'%;background:'+(n>=w.seuil?'var(--good)':'var(--accent)')+'"></i>'+
-        '<span class="mark" style="left:'+pc(w.palier)+'%"><em>Palier '+w.palier+' · '+euro(w.mPalier)+'</em></span>'+
-        '<span class="mark seuil" style="left:'+pc(w.seuil)+'%"><em>Seuil '+w.seuil+' · '+euro(w.mSeuil)+'</em></span></div>'+
-      '<p class="chw-hint">'+hint+'</p></div>'; });
+        '<span class="mark" style="left:'+pc(w.palier)+'%" title="Palier"></span>'+
+        '<span class="mark seuil" style="left:'+pc(w.seuil)+'%" title="Seuil"></span></div>'+
+      '<div class="chw-foot"><p class="chw-hint">'+hint+'</p>'+
+        '<div class="chw-gains">'+
+          '<div class="g'+(n>=w.palier&&state!=="avenir"?' ok':'')+'"><span>Palier · '+w.palier+' RDV</span><b>'+euro(w.mPalier)+'</b></div>'+
+          '<div class="g seuil'+(n>=w.seuil&&state!=="avenir"?' ok':'')+'"><span>Seuil · '+w.seuil+' RDV</span><b>'+euro(w.mSeuil)+'</b></div>'+
+        '</div></div></div>'; });
   max+=ch.bonus||0;
   const bonusWon = finished && allSeuil && ch.weeks.length;
   if(bonusWon) total+=ch.bonus||0;
