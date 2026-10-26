@@ -607,6 +607,7 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
       <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="chip" id="rsRestore" hidden>Restaurer les saisies du dernier RESET</button></div>
       <div class="eyebrow" style="margin-top:6px">Corbeille</div>
       <ul class="hist" id="trash"></ul>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="resetbtn" id="trashEmpty" hidden>Vider la corbeille</button><button class="chip" id="trashCancel" hidden>Annuler</button><span class="muted" id="trashInfo" style="font-size:13px"></span></div>
     </div>
     </div>
   </section>
@@ -1164,12 +1165,14 @@ function backupLocal(){ clearTimeout(bkTimer); bkTimer=setTimeout(()=>{
   const old=readBackup()||{appels:[],jours:[]}, A=new Map((old.appels||[]).map(r=>[r.id,r])), J=new Map((old.jours||[]).map(r=>[r.id,r]));
   // La copie ne fait que s'enrichir : une fiche disparue de la base reste dans la copie et peut être restaurée.
   for(const r of SRV.appels.values()) A.set(r.id, r); for(const r of SRV.jours.values()) J.set(r.id, r);
+  purged().forEach(id=>A.delete(id));
   const miss=[...A.keys()].filter(id=>!SRV.appels.has(id)).length + [...J.keys()].filter(id=>!SRV.jours.has(id)).length;
   S.bkWarn = miss>=3;
   if(A.size||J.size) lsx.set("poc_backup", JSON.stringify({t:Date.now(), appels:[...A.values()], jours:[...J.values()]}));
   renderSauvegardes(); renderLocks(); }, 800); }
-function missingFromBackup(){ const b=readBackup(); if(!b) return [];
-  return [...(b.appels||[]).filter(r=>!SRV.appels.has(r.id)).map(r=>({col:"appels",r})), ...(b.jours||[]).filter(r=>!SRV.jours.has(r.id)).map(r=>({col:"jours",r}))]; }
+const purged = () => new Set(Array.isArray(S.cfg.purges) ? S.cfg.purges : []);
+function missingFromBackup(){ const b=readBackup(); if(!b) return []; const P=purged();
+  return [...(b.appels||[]).filter(r=>!SRV.appels.has(r.id) && !P.has(r.id)).map(r=>({col:"appels",r})), ...(b.jours||[]).filter(r=>!SRV.jours.has(r.id)).map(r=>({col:"jours",r}))]; }
 
 /* Actions */
 const newDay = (cc,date) => ({cc, date, mois:mkey(date)});
@@ -1226,7 +1229,9 @@ function renderSauvegardes(){
   $("bkRestore").hidden=!miss; $("bkRestore").textContent="Restaurer "+miss+" fiche"+(miss>1?"s":"")+" absente"+(miss>1?"s":"")+" de la base";
   $("rsInfo").textContent = lr.rid ? "Dernier RESET : "+new Date(+lr.rid.slice(1)).toLocaleString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})+" · "+lr.n+" saisie"+(lr.n>1?"s":"")+" archivée"+(lr.n>1?"s":"")+"." : "Aucun RESET effectué.";
   $("rsRestore").hidden=!lr.rid||!lr.n;
-  const trash=[...S.appels.values()].filter(r=>r.supprime && !r.archive).sort((a,b)=>(b.supprimeT||0)-(a.supprimeT||0)).slice(0,30);
+  const trashAll=[...S.appels.values()].filter(r=>r.supprime && !r.archive), trash=[...trashAll].sort((a,b)=>(b.supprimeT||0)-(a.supprimeT||0)).slice(0,30);
+  $("trashEmpty").hidden=!trashAll.length; $("trashEmpty").textContent = trashArmed ? "Confirmer : supprimer définitivement "+trashAll.length+" saisie"+(trashAll.length>1?"s":"") : "Vider la corbeille ("+trashAll.length+")";
+  $("trashEmpty").classList.toggle("arm", trashArmed); $("trashCancel").hidden=!trashArmed;
   $("trash").innerHTML = trash.length ? trash.map(r=>'<li><span class="when">'+whenLabel(r.t,r.date)+'</span><span class="tag '+r.type+'">'+(r.type==="mes"?"MES":"GC")+'</span><span class="res">'+esc(name(r.cc))+' · '+(OUT[r.issue]||"")+'</span><button class="del" data-untrash="'+esc(r.id)+'">Restaurer</button></li>').join("") : '<li class="muted">La corbeille est vide.</li>';
   $("bkWarn").hidden = !(S.bkWarn && isAdmin()); }
 let cfgTimer=null;
@@ -1235,6 +1240,17 @@ function errToast(e){ const c=e&&e.code; toast(c==="permission-denied" ? "Enregi
 let tTimer=null, tUndo=null;
 function toast(msg, undo, dur, cheer){ $("toastMsg").textContent=msg; tUndo=undo; $("toastUndo").hidden=!undo; $("toast").classList.toggle("cheer", !!cheer); $("toast").hidden=false; clearTimeout(tTimer); tTimer=setTimeout(()=>{$("toast").hidden=true; tUndo=null;}, dur||6000); }
 $("toastUndo").addEventListener("click",()=>{ if(tUndo) tUndo(); tUndo=null; $("toast").hidden=true; });
+let trashArmed=false;
+$("trashCancel").addEventListener("click", e=>{ e.stopPropagation(); trashArmed=false; $("trashInfo").textContent=""; renderSauvegardes(); });
+$("trashEmpty").addEventListener("click", async e=>{ e.stopPropagation(); if(!isAdmin()||!S.db) return;
+  if(!trashArmed){ trashArmed=true; $("trashInfo").textContent="Action définitive : ces saisies ne pourront plus être restaurées."; renderSauvegardes(); return; }
+  trashArmed=false; const ids=[...S.appels.values()].filter(r=>r.supprime && !r.archive).map(r=>r.id); let ok=0, refused=false;
+  $("trashInfo").textContent="Suppression en cours…";
+  for(const id of ids){ try{ await S.db.collection("appels").doc(id).delete(); ok++; }catch(x){ if(x&&x.code==="permission-denied"){ refused=true; break; } } }
+  if(ok){ const P=[...purged(), ...ids.slice(0,ok)]; S.cfg.purges=P.slice(-5000); saveCfg();
+    try{ const b=readBackup(); if(b){ const Q=new Set(P); b.appels=(b.appels||[]).filter(r=>!Q.has(r.id)); lsx.set("poc_backup", JSON.stringify(b)); } }catch(x){} }
+  $("trashInfo").textContent = refused && !ok ? "Suppression refusée par la base : ajoutez la ligne de suppression dans les règles Firestore (voir la conversation avec Claude)." : ok+" saisie"+(ok>1?"s":"")+" supprimée"+(ok>1?"s":"")+" définitivement.";
+  renderSauvegardes(); });
 $("bkRestore").addEventListener("click", e=>{ e.stopPropagation(); restoreBackup(); });
 $("rsRestore").addEventListener("click", e=>{ e.stopPropagation(); restoreReset(); });
 
