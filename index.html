@@ -1177,7 +1177,7 @@ function addEvent(type, issue){
   if(!S.db||!canUse(S.cc)) return; const date=today(), cc=S.cc, t=Date.now(), id=cc+"_"+t;
   enqueue({col:"appels", id, mode:"set", data:{...newDay(cc,date), t, type, issue}});
   S.lastRefus = issue==="refus" ? {cc,date,t} : null; render();
-  const cheer = issue==="rdv" && meKey()===cc ? encourageRdv(cc) : null;
+  const cheer = issue==="rdv" && canUse(cc) ? encourageRdv(cc) : null;
   toast(cheer ? cheer : (issue==="rdv"?"RDV pris":OUT[issue])+" · "+TYPE[type]+" · enregistré", ()=>removeEvent(cc,date,t,true), cheer?9000:6000, !!cheer);
 }
 function patchEvent(cc,t,patch){ if(!S.db||!canUse(cc)) return; enqueue({col:"appels", id:cc+"_"+t, mode:"merge", data:patch}); }
@@ -1186,7 +1186,7 @@ function removeEvent(cc,date,t,silent){ if(!canUse(cc)) return; if(S.lastRefus&&
   if(!silent) toast("Saisie mise à la corbeille", ()=>patchEvent(cc,t,{supprime:false, supprimeT:null})); }
 function setVente(cc,date,t,on){
   patchEvent(cc,t, on ? {vente:true, venteDate:today(), venteT:Date.now(), annule:false, annuleDate:null} : {vente:false, venteDate:null, venteT:null});
-  if(on){ const cheer = meKey()===cc ? encourageVente(cc) : null; toast(cheer || "Installation vendue enregistrée", ()=>setVente(cc,date,t,false), cheer?9000:6000, !!cheer); } }
+  if(on){ const cheer = canUse(cc) ? encourageVente(cc) : null; toast(cheer || "Installation vendue enregistrée", ()=>setVente(cc,date,t,false), cheer?9000:6000, !!cheer); } }
 function setAnnule(cc,date,t,on){
   patchEvent(cc,t, on ? {annule:true, annuleDate:today(), vente:false, venteDate:null, venteT:null} : {annule:false, annuleDate:null});
   if(on) toast("RDV marqué annulé", ()=>setAnnule(cc,date,t,false)); }
