@@ -204,6 +204,11 @@ main{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:24px 64px;
 .login-box .brand small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .recap{display:grid;gap:12px}
 .recap textarea{width:100%;min-height:360px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);padding:12px 14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}
+#toastMsg{white-space:pre-line}
+.toast.cheer{background:linear-gradient(135deg,var(--accent-ink),var(--accent));color:#fff;font-size:15px;max-width:min(560px,calc(100% - 32px));box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.toast.cheer button{background:rgba(255,255,255,.2);color:#fff}
+@media (prefers-reduced-motion:no-preference){.toast.cheer{animation:cheerIn .35s ease-out}}
+@keyframes cheerIn{from{transform:translate(-50%,16px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
 .priv-note{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .chip.ghost{background:none;color:var(--muted)}
 .resetbtn{border:2px solid var(--bad);background:var(--bad-soft);color:var(--bad);border-radius:8px;padding:8px 14px;font-weight:700}
@@ -916,6 +921,48 @@ $("copyBilan").addEventListener("click", async e=>{ e.stopPropagation(); const t
   try{ await navigator.clipboard.writeText(txt); toast("Tableau copié : collez-le dans Excel ou PowerPoint.", null); }
   catch(err){ toast("Copie bloquée par le navigateur. Sélectionnez le tableau à la main.", null); } });
 
+/* ---------- encouragements (tutoiement) ----------
+   Un message personnel quand un CC déclare un RDV pris ou une installation vendue.
+   Jamais de comparaison avec les collègues, jamais de message négatif. */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const fill = (tpl, v) => tpl.replace(/\{(\w+)\}/g, (m,k)=> v[k]!==undefined ? v[k] : m);
+const ord = n => n===1 ? "1er" : n+"e";
+function myRdvs(cc){ return allEvents().filter(e=>e.kind==="appel" && e.cc===cc && e.issue==="rdv" && !e.annule); }
+function challengeLine(){
+  const ch=CH(), td=today(), w=ch.weeks.find(x=>td>=x.start && td<=addDays(x.start,6)); if(!w) return "";
+  const n=weekRdv(w);
+  if(n===w.palier) return pick(["Grâce à toi, l'équipe décroche le palier : {p} de plus dans la cagnotte !","Palier atteint pour l'équipe ({p}) : ton RDV a fait la différence !"]).replace("{p}", euro(w.mPalier));
+  if(n===w.seuil) return pick(["Seuil atteint : l'équipe empoche {s} cette semaine, et c'est ton RDV qui l'a débloqué !","Et de {n} ! Seuil atteint, {s} pour la cagnotte de l'équipe !"]).replace("{s}", euro(w.mSeuil)).replace("{n}", n);
+  if(n<w.palier) return "Équipe : plus que "+(w.palier-n)+" RDV pour le palier ("+euro(w.mPalier)+").";
+  if(n<w.seuil) return "Équipe : plus que "+(w.seuil-n)+" RDV pour le seuil ("+euro(w.mSeuil)+").";
+  return "";
+}
+function encourageRdv(cc){
+  const td=today(), ws=mondayOf(new Date()), mine=myRdvs(cc);
+  const week=mine.filter(e=>e.date>=ws && e.date<=td).length, day=mine.filter(e=>e.date===td).length, month=mine.filter(e=>mkey(e.date)===mkey(td)).length;
+  const obj=curTarget()/CCS.length, objR=Math.ceil(obj-1e-9), reste=objR-month, prenom=name(cc);
+  let best=0; for(let w=addDays(ws,-7); w>=addDays(S.cfg.start,-6); w=addDays(w,-7)){ const n=mine.filter(e=>e.date>=w && e.date<=addDays(w,6)).length; if(n>best) best=n; }
+  const v={prenom, week, day, month, reste, obj:objR, ordw:ord(week), ordm:ord(month)};
+  let main;
+  if(month===objR) main=pick(["Objectif du mois atteint, {prenom} ! {month} RDV, c'est carton plein. Chaque RDV en plus, c'est du bonus pour l'équipe.","Bravo {prenom}, objectif du mois atteint ! Chapeau bas.","{month} RDV ce mois-ci : objectif atteint ! Continue sur cette lancée."]);
+  else if(week===1) main=pick(["Premier RDV de la semaine, la machine est lancée !","Et c'est parti pour la semaine, {prenom} ! Premier RDV dans la poche.","1er RDV de la semaine, bien joué ! Le plus dur est fait."]);
+  else if(best>0 && week===best+1) main=pick(["Record battu : ta meilleure semaine depuis le début du POC ({week} RDV) !","{week} RDV cette semaine, c'est ton record, {prenom} ! Bravo !"]);
+  else if(day>=3) main=pick(["{day} RDV aujourd'hui, tu es en feu, {prenom} !","{day}e RDV de la journée : quelle journée !"]);
+  else if(day===2) main=pick(["2 RDV aujourd'hui, belle dynamique !","Et de deux aujourd'hui ! Tu as trouvé le bon rythme."]);
+  else if(reste>0) main=pick(["{ordm} RDV ce mois-ci, plus que {reste} pour atteindre ton objectif.","Bien joué {prenom} ! Encore {reste} RDV et ton objectif du mois est atteint.","{ordw} RDV de la semaine. Objectif du mois : plus que {reste} !"]);
+  else main=pick(["{month} RDV ce mois-ci, au-delà de ton objectif : tu tires toute l'équipe vers le haut !","Encore un, {prenom} ! Tu es déjà au-dessus de ton objectif du mois.","{ordm} RDV du mois : tu dépasses ton objectif, chapeau !"]);
+  const ch=challengeLine();
+  return "RDV enregistré ✓  "+fill(main,v)+(ch?"\n"+ch:"");
+}
+function encourageVente(cc){
+  const td=today(), mine=allEvents().filter(e=>e.kind==="vente" && e.cc===cc), month=mine.filter(e=>mkey(e.date)===mkey(td)).length;
+  const obj=Math.ceil(curTarget(OV())/CCS.length-1e-9), reste=obj-month, v={prenom:name(cc), month, reste};
+  const main = month===obj ? pick(["Objectif installations du mois atteint, {prenom} ! Superbe travail.","{month} installations ce mois-ci : objectif atteint, bravo !"])
+    : reste>0 ? pick(["Installation vendue, bravo {prenom} ! Plus que {reste} pour ton objectif du mois.","Une vente de plus ! Encore {reste} et ton objectif installations est atteint."])
+    : pick(["Encore une installation ! Tu dépasses ton objectif du mois, chapeau {prenom}.","Vente enregistrée : tu es au-delà de ton objectif, bravo !"]);
+  return "Installation enregistrée ✓  "+fill(main,v);
+}
+
 /* ---------- récap hebdomadaire (responsable) ---------- */
 S.recapW=-1;
 function mondayOf(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return dstr(x); }
@@ -1130,7 +1177,8 @@ function addEvent(type, issue){
   if(!S.db||!canUse(S.cc)) return; const date=today(), cc=S.cc, t=Date.now(), id=cc+"_"+t;
   enqueue({col:"appels", id, mode:"set", data:{...newDay(cc,date), t, type, issue}});
   S.lastRefus = issue==="refus" ? {cc,date,t} : null; render();
-  toast((issue==="rdv"?"RDV pris":OUT[issue])+" · "+TYPE[type]+" · enregistré", ()=>removeEvent(cc,date,t,true));
+  const cheer = issue==="rdv" && meKey()===cc ? encourageRdv(cc) : null;
+  toast(cheer ? cheer : (issue==="rdv"?"RDV pris":OUT[issue])+" · "+TYPE[type]+" · enregistré", ()=>removeEvent(cc,date,t,true), cheer?9000:6000, !!cheer);
 }
 function patchEvent(cc,t,patch){ if(!S.db||!canUse(cc)) return; enqueue({col:"appels", id:cc+"_"+t, mode:"merge", data:patch}); }
 function removeEvent(cc,date,t,silent){ if(!canUse(cc)) return; if(S.lastRefus&&S.lastRefus.t===t) S.lastRefus=null;
@@ -1138,7 +1186,7 @@ function removeEvent(cc,date,t,silent){ if(!canUse(cc)) return; if(S.lastRefus&&
   if(!silent) toast("Saisie mise à la corbeille", ()=>patchEvent(cc,t,{supprime:false, supprimeT:null})); }
 function setVente(cc,date,t,on){
   patchEvent(cc,t, on ? {vente:true, venteDate:today(), venteT:Date.now(), annule:false, annuleDate:null} : {vente:false, venteDate:null, venteT:null});
-  if(on) toast("Installation vendue enregistrée", ()=>setVente(cc,date,t,false)); }
+  if(on){ const cheer = meKey()===cc ? encourageVente(cc) : null; toast(cheer || "Installation vendue enregistrée", ()=>setVente(cc,date,t,false), cheer?9000:6000, !!cheer); } }
 function setAnnule(cc,date,t,on){
   patchEvent(cc,t, on ? {annule:true, annuleDate:today(), vente:false, venteDate:null, venteT:null} : {annule:false, annuleDate:null});
   if(on) toast("RDV marqué annulé", ()=>setAnnule(cc,date,t,false)); }
@@ -1185,7 +1233,7 @@ let cfgTimer=null;
 function saveCfg(){ render(); if(!S.db||!isAdmin()) return; clearTimeout(cfgTimer); cfgTimer=setTimeout(()=>queued("cfg",()=>S.db.doc("config/poc").set({...S.cfg})).catch(errToast),600); }
 function errToast(e){ const c=e&&e.code; toast(c==="permission-denied" ? "Enregistrement refusé : reconnectez-vous avec votre code." : c==="resource-exhausted" ? "Limite quotidienne de la base atteinte : prévenez le responsable du POC." : "Enregistrement impossible pour le moment. La saisie est gardée et repartira automatiquement.", null); }
 let tTimer=null, tUndo=null;
-function toast(msg, undo){ $("toastMsg").textContent=msg; tUndo=undo; $("toastUndo").hidden=!undo; $("toast").hidden=false; clearTimeout(tTimer); tTimer=setTimeout(()=>{$("toast").hidden=true; tUndo=null;}, 6000); }
+function toast(msg, undo, dur, cheer){ $("toastMsg").textContent=msg; tUndo=undo; $("toastUndo").hidden=!undo; $("toast").classList.toggle("cheer", !!cheer); $("toast").hidden=false; clearTimeout(tTimer); tTimer=setTimeout(()=>{$("toast").hidden=true; tUndo=null;}, dur||6000); }
 $("toastUndo").addEventListener("click",()=>{ if(tUndo) tUndo(); tUndo=null; $("toast").hidden=true; });
 $("bkRestore").addEventListener("click", e=>{ e.stopPropagation(); restoreBackup(); });
 $("rsRestore").addEventListener("click", e=>{ e.stopPropagation(); restoreReset(); });
